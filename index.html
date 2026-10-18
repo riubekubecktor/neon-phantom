@@ -266,6 +266,45 @@ button:disabled{cursor:not-allowed}
 #hint{display:block;padding:5px 10px 4px 12px;font:400 16px/1.15 var(--fv);letter-spacing:.04em;color:#dff6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,rgba(0,240,255,.08),transparent);pointer-events:none;border-top:1px solid rgba(0,240,255,.25)}
 #hint b{color:var(--y);font-weight:400}
+/* ── mini range diagrams ── */
+.card canvas.mg{float:right;width:66px;height:66px;max-width:none;aspect-ratio:auto;margin:0 0 4px 7px}
+.pvmg{display:flex;gap:10px;align-items:center;margin:8px 0 2px}
+.pvmg canvas{width:126px;height:126px;flex:none}
+.mgleg{display:grid;gap:3px;font:400 14px/1.1 var(--fv);color:var(--dim)}
+.mgleg span{display:flex;align-items:center;gap:6px}
+.mgleg i{width:11px;height:11px;flex:none;display:inline-block}
+.mgleg .s{background:#00f0ff;box-shadow:inset 0 0 0 2px #fff}
+.mgleg .o{background:rgba(0,240,255,.34)}
+.mgleg .m{background:#ff8a2a}
+.mgleg .b{background:rgba(255,138,42,.4);outline:1px dashed #ff8a2a;outline-offset:-1px}
+.mgleg .e{background:#ff2a8a}
+.mgleg .w{background:#3b62b8}
+.legline{display:flex;flex-wrap:wrap;gap:4px 12px;margin:-2px 0 8px;font:400 14px/1 var(--fv);color:var(--dim)}
+.legline span{display:inline-flex;align-items:center;gap:5px}
+.legline i{width:10px;height:10px;display:inline-block}
+.legline .s{background:#00f0ff;box-shadow:inset 0 0 0 2px #fff}.legline .o{background:rgba(0,240,255,.34)}.legline .m{background:#ff8a2a}
+.legline .b{background:rgba(255,138,42,.4);outline:1px dashed #ff8a2a;outline-offset:-1px}.legline .e{background:#ff2a8a}.legline .w{background:#3b62b8}
+/* skill category tags */
+.ctag{display:inline-block;margin:0 0 0 6px;font:400 13px/1 var(--fv);padding:1px 5px 0;color:#02030a;vertical-align:1px}
+.ctag.mv{background:var(--c)}.ctag.df{background:var(--g)}.ctag.jm{background:var(--m)}.ctag.bf{background:var(--o)}.ctag.st{background:var(--y)}.ctag.self{background:#9fb3d6}
+/* frame card stat bars */
+.fst{display:grid;grid-template-columns:30px 1fr 22px;align-items:center;gap:5px;margin-top:3px;font:400 14px/1 var(--fv);color:var(--dim)}
+.fst .fb{height:6px;background:#0a1224;position:relative;overflow:hidden}
+.fst .fb i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--g) 0 4px,transparent 4px 6px)}
+.fst .fp{display:flex;gap:2px}
+.fst .fp i{width:7px;height:7px;background:#1a2748}
+.fst .fp i.on{background:var(--y)}
+.fst b{color:#fff;font-weight:400;text-align:right}
+/* turn timer bar */
+#tbar{position:absolute;left:0;top:0;height:2px;width:0;background:var(--c);box-shadow:0 0 6px var(--c);transition:width .25s linear}
+#tbar.urg{background:var(--m);box-shadow:0 0 8px var(--m)}
+@media (max-width:560px){
+  #ctrl{grid-template-columns:repeat(6,1fr)!important}
+  #bMove,#bAtk{order:1;grid-column:span 2}#bUlt{order:2;grid-column:span 2}
+  #bSk0,#bSk1{order:3;grid-column:span 3}
+  #bUndo,#bReset{order:4;grid-column:span 1}#bExec{order:4;grid-column:span 4!important}
+  #ctrl .btn>.in{min-height:44px}
+}
 #toast{position:absolute;left:50%;top:12%;transform:translateX(-50%);padding:6px 14px 5px;font:700 11px var(--fo);letter-spacing:.12em;color:#fff;background:rgba(255,42,138,.92);pointer-events:none;opacity:0;transition:opacity .2s;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);white-space:nowrap}
 #toast.show{opacity:1}
 
@@ -408,6 +447,7 @@ header.title{position:relative}
         <div class="stat"><span>HP</span><div class="bar hpb"><i id="pvHp"></i></div><b id="pvHpN">100</b></div>
         <div class="stat"><span>MOVE</span><div class="bar apb"><i id="pvAp"></i></div><b id="pvApN">5</b></div>
         <div class="stat"><span>DMG</span><div class="bar"><i id="pvDmg"></i></div><b id="pvDmgN">30</b></div>
+        <div class="pvmg"><canvas id="pvMg" width="252" height="252"></canvas><div class="mgleg"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例：右を狙った時）</span><span><i class="b"></i>爆風・追加ダメージ</span><span><i class="w"></i>壁</span></div></div>
         <div class="pvpas" id="pvPas"></div>
         <div class="loadout">
           <div class="lo"><span>WEAPON</span><b id="pvW">—</b></div>
@@ -420,7 +460,7 @@ header.title{position:relative}
         <div class="sect"><h3>STARTER<i>まずはこれ</i></h3><div class="starters" id="cStarters"></div></div>
         <div class="sect"><h3>PRESET<i id="psCnt">0/2</i></h3><div class="presets" id="cPresets"></div></div>
         <div class="sect"><h3>FRAME<i>01</i></h3><div class="cards f" id="cFrames"></div></div>
-        <div class="sect"><h3>WEAPON<i>02</i></h3><div class="cards w" id="cWeapons"></div></div>
+        <div class="sect"><h3>WEAPON<i>02</i></h3><div class="legline"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例）</span><span><i class="b"></i>爆風・追加</span><span><i class="w"></i>壁</span><span><i class="e"></i>相手</span></div><div class="cards w" id="cWeapons"></div></div>
         <div class="sect"><h3>SKILL × 2<i>03</i></h3><div class="cards s" id="cSkills"></div></div>
         <div class="sect"><h3>ULTIMATE<i>04</i></h3><p class="unote">フレームごとに2種類から1つ。何を選んだかは相手に見えない。ゲージはだいたい6ターン目に満タン（被ダメージが多いほど早い）。1試合に1回だけ撃てる</p><div class="cards u" id="cUlts"></div></div>
       </section>
@@ -464,7 +504,7 @@ header.title{position:relative}
       </div>
       <div class="plate" id="bwrap"><div class="in">
         <canvas id="board"></canvas>
-        <div id="hint"></div>
+        <div id="hint"></div><i id="tbar"></i>
         <div id="toast"></div>
       </div></div>
       <div class="plate" id="qbar"><div class="in">
@@ -2499,6 +2539,10 @@ function drawUnits(g,t,dt){
     g.fillStyle='rgba(255,255,255,.55)';g.fillRect(bx,by,bw*clamp(V.hpG[s]/u.maxHp,0,1),3);
     g.fillStyle=col;g.fillRect(bx,by,bw*clamp(V.hp[s]/u.maxHp,0,1),3);
     for(const c of mirageCells(u))drawDecoy(g,u,s,c,t,dt);
+    if(u.alive&&!u.ultUsed&&u.gauge>=GAUGE_MAX){const spots=[{x:p.x,y:p.y},...mirageCells(u).map(c=>({x:cxOf(c.x),y:cxOf(c.y)}))];
+      for(const q of spots){const w2=C*.5,h2=C*.2,hb=Math.max(2,q.y-C*.8);let by2=hb-h2-3;if(by2<-TOP+2)by2=hb+7;const pul=.8+.2*Math.sin(t*.012);g.save();g.globalAlpha=pul;g.shadowColor=ULT_COLOR;g.shadowBlur=8;g.fillStyle=ULT_COLOR;
+        g.beginPath();g.moveTo(q.x-w2/2,by2);g.lineTo(q.x+w2/2,by2);g.lineTo(q.x+w2/2-3,by2+h2);g.lineTo(q.x-w2/2+3,by2+h2);g.closePath();g.fill();
+        g.shadowBlur=0;g.fillStyle='#02030a';g.font='900 '+Math.round(C*.14)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='middle';g.fillText('ULT',q.x,by2+h2/2+1);g.restore();}}
   }
 }
 
@@ -3035,7 +3079,8 @@ function refreshHUD(){
   $('tNum').textContent=pad2(S.turn);
   const dl=NET.on?NET.deadline:UI.deadline,left=dl?Math.max(0,Math.ceil((dl-Date.now())/1000)):null;
   const tp=$('tPh');tp.textContent=S.over?'END':S.phase==='wait'?'WAIT':S.phase==='plan'?((UI.hack?'HACK':'PLAN')+(left!=null?' '+left:'')):'EXECUTE';tp.classList.toggle('ex',S.phase!=='plan');
-  tp.classList.toggle('urg',S.phase==='plan'&&left!=null&&left<=5);tp.classList.toggle('hk',!!UI.hack&&S.phase==='plan');
+  tp.classList.toggle('urg',S.phase==='plan'&&left!=null&&left<=5);
+  {const tb=$('tbar');if(tb){const on=S.phase==='plan'&&dl&&!S.over;tb.style.width=on?(clamp((dl-Date.now())/(TURN_SEC*1000),0,1)*100)+'%':'0';tb.classList.toggle('urg',on&&left<=5);}}tp.classList.toggle('hk',!!UI.hack&&S.phase==='plan');
   updateHpBars();
 }
 function chipLabel(a,u){
@@ -3085,14 +3130,14 @@ function refreshButtons(){
   if(!S)return;
   const u=S.units[0];const planning=S.phase==='plan'&&!UI.busy&&!S.over&&u.alive;const sim=planning?simPlan():{ap:0};const bud=planning?budget(u,sim):{ap:0,mv:0};const apLeft=bud.ap;
   const W=WEAPONS[u.weapon];
-  $('atkN').textContent=W.name;$('atkS').textContent=W.ap+'BIT · '+(W.dmg||'—')+'DMG';
+  $('atkN').textContent=W.name;$('atkS').textContent=W.ap+'BIT '+(W.dmg||'—')+'DMG';
   const mvLeft=bud.mv;$('bMove').disabled=!planning||apLeft<1||mvLeft<1;$('bMoveS').textContent='残り'+Math.max(0,Math.min(mvLeft,apLeft))+'マス';$('bAtk').disabled=!planning||apLeft<W.ap;
   for(let i=0;i<2;i++){
     const b=$('bSk'+i),sk=u.skills[i];
     if(!sk){b.style.display='none';continue;}b.style.display='';
     const d=SKILLS[sk.key];$('sk'+i+'N').textContent=d.name;
     const st=skillState(i);
-    $('sk'+i+'S').textContent=(d.ap?d.ap+'BIT · ':'')+'CD'+d.cd+(st.ok?'':' · '+st.why);
+    $('sk'+i+'S').textContent=st.ok?((d.ap?d.ap+'BIT ':'')+(SKILL_CAT[sk.key]||['自分'])[0]):(st.why==='CD'?'CD中':st.why);
     b.disabled=!planning||!st.ok;
     const cv=$('sk'+i+'C');if(sk.cd>0){cv.classList.add('show');cv.innerHTML=sk.cd+'<small>TURN</small>';}else cv.classList.remove('show');
   }
@@ -3641,6 +3686,57 @@ function showResult(kind){
 function toSetup(){UI.deadline=0;UI.hack=null;if(NET.on)netLeave(true);if(UI.replay)endReplayUI();$('result').classList.remove('show');$('game').style.display='none';$('setup').style.display='block';UI.screen='setup';S=null;newRival();refreshSetup();}
 
 /* ── setup screen ── */
+/* ── mini range diagrams: real engine geometry on an empty 7×7, self in the middle ── */
+const SKILL_CAT={BLINK:['移動','mv'],REWIND:['移動','mv'],SWAP:['移動','mv'],SHIELD:['防御','df'],REFLECT:['防御','df'],ANCHOR:['防御','df'],REPAIR:['回復','df'],
+  JAMMER:['妨害','jm'],SILENCE:['妨害','jm'],HOOK:['妨害','jm'],CHARGE:['強化','bf'],X_RAY:['強化','bf'],OVERCLOCK:['強化','bf'],WALL_GEN:['設置','st'],MINE:['設置','st']};
+function mgCompute(kind,key){
+  const save=S;const map=[...Array(N)].map(()=>Array(N).fill(0));
+  let wall=null,enemy=null;
+  if(kind==='atk'&&['BOLT_RIFLE','RESONANCE','ARC_MORTAR'].includes(key)){wall={x:4,y:3};map[3][4]=1;}
+  if(kind==='sk'&&key==='HOOK')enemy={x:6,y:3};
+  if(kind==='sk'&&key==='SWAP')enemy={x:5,y:1};
+  S={map,wallHp:{},turn:1,units:[{side:0,alive:true,x:3,y:3},{side:1,alive:!!enemy,x:enemy?enemy.x:-9,y:enemy?enemy.y:-9}],mines:[],spikes:[],burns:[],mortars:[],orbitals:[],clusters:[]};
+  try{
+    let tgt,range;
+    if(kind==='atk'){const W=WEAPONS[key];tgt=W.tgt;range=W.range;}
+    else if(kind==='sk'){const d=SKILLS[key];tgt=d.tgt;range=d.range||N;}
+    else{const d=ULTS[key];tgt=d.tgt;range=d.range||N;}
+    if(tgt==='none')return null;
+    let opts=[];
+    if(tgt==='dir4'){for(const [dx,dy] of DIR4){let x=3+dx,y=3+dy;while(inB(x,y)){opts.push({x,y});x+=dx;y+=dy;}}}
+    else if(tgt==='any'){for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(x!==3||y!==3)opts.push({x,y});}
+    else opts=targetOptions(3,3,tgt,range,0);
+    if(!opts.length)return {opts,ex:null,geo:{main:[],sub:[],push:[]},wall,enemy,extra:[]};
+    const pref=(['throw','lob','any','square'].includes(tgt))?{x:5,y:2}:tgt==='swap'?{x:5,y:1}:tgt==='hook'?{x:6,y:3}:{x:3+Math.min(range,3),y:3};
+    let ex=opts.find(c=>c.x===pref.x&&c.y===pref.y);
+    if(!ex){const row=opts.filter(c=>c.y===3&&c.x>3).sort((a,b)=>b.x-a.x);ex=row[0]||opts[0];}
+    let geo=previewGeom(kind,key,3,3,ex.x,ex.y,false);
+    if(kind==='sk'&&key==='SWAP')geo={main:[{x:5,y:1}],sub:[],push:[]};
+    let extra=[];if(kind==='ult'&&key==='PHANTOM_MIRAGE')extra=mirageDecoys({x:3,y:3},ex);
+    return {opts,ex,geo,wall,enemy,extra};
+  }catch(e){return null;}
+  finally{S=save;}
+}
+function drawMini(cv,kind,key){
+  if(!cv)return false;const color='#ff8a2a';
+  const g=cv.getContext('2d'),W=cv.width,cs=W/N;g.clearRect(0,0,W,W);
+  const r=mgCompute(kind,key);
+  const has=(arr,x,y)=>arr.some(c=>c.x===x&&c.y===y);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){g.fillStyle='#17244c';g.fillRect(x*cs+1,y*cs+1,cs-2,cs-2);}
+  if(r){
+    for(const c of r.opts){g.fillStyle='rgba(0,240,255,.34)';g.fillRect(c.x*cs+1,c.y*cs+1,cs-2,cs-2);}
+    for(const c of r.geo.sub){if(!inB(c.x,c.y))continue;g.fillStyle=hexA(color,.4);g.fillRect(c.x*cs+1,c.y*cs+1,cs-2,cs-2);g.save();g.setLineDash([cs*.18,cs*.12]);g.strokeStyle=color;g.lineWidth=Math.max(1,cs*.07);g.strokeRect(c.x*cs+2,c.y*cs+2,cs-4,cs-4);g.restore();}
+    for(const c of r.geo.main){if(!inB(c.x,c.y))continue;g.fillStyle=color;g.fillRect(c.x*cs+1,c.y*cs+1,cs-2,cs-2);}
+    for(const c of r.geo.push){if(!inB(c.x,c.y))continue;g.fillStyle='#fff';g.beginPath();g.arc((c.x+.5)*cs,(c.y+.5)*cs,cs*.16,0,Math.PI*2);g.fill();}
+    if(r.wall){const x=r.wall.x*cs,y=r.wall.y*cs;g.fillStyle='#3b62b8';g.fillRect(x+1,y+1,cs-2,cs-2);g.fillStyle='#8fb0ff';g.fillRect(x+1,y+1,cs-2,Math.max(1,cs*.18));
+      if(has(r.geo.main,r.wall.x,r.wall.y)){g.fillStyle=hexA(color,.55);g.fillRect(x+cs*.25,y+cs*.25,cs*.5,cs*.5);}}
+    if(r.enemy){g.fillStyle='#ff2a8a';g.fillRect(r.enemy.x*cs+cs*.15,r.enemy.y*cs+cs*.15,cs*.7,cs*.7);}
+    for(const c of r.extra){g.strokeStyle='#c77dff';g.lineWidth=Math.max(1.5,cs*.1);g.strokeRect(c.x*cs+cs*.2,c.y*cs+cs*.2,cs*.6,cs*.6);}
+  }
+  const sx=3*cs,sy=3*cs;g.fillStyle='#00f0ff';g.fillRect(sx+1,sy+1,cs-2,cs-2);g.strokeStyle='#fff';g.lineWidth=Math.max(1.5,cs*.1);g.strokeRect(sx+cs*.12,sy+cs*.12,cs*.76,cs*.76);
+  g.fillStyle='#02030a';g.beginPath();g.moveTo(sx+cs*.68,sy+cs*.5);g.lineTo(sx+cs*.36,sy+cs*.3);g.lineTo(sx+cs*.36,sy+cs*.7);g.closePath();g.fill();
+  return !!r;
+}
 const STARTERS=[
   {label:'近づいて斬る',  tip:'迷ったらこれ。BLINKで間合いを詰めて薙ぎ払う',frame:'ASSAULT', weapon:'NEON_BLADE',skills:['BLINK','SHIELD'], ult:'COUNTER_RUSH'},
   {label:'どっしり殴る',  tip:'硬さで受けて、杭で壁に叩きつける',          frame:'HEAVY',   weapon:'PILE_BNKR', skills:['ANCHOR','REPAIR'],ult:'IRON_WALL'},
@@ -3659,21 +3755,22 @@ function buildSetup(){
   const fEl=$('cFrames');fEl.innerHTML='';
   for(const [k,f] of Object.entries(FRAMES)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><canvas width="184" height="184"></canvas><span class="cn">'+f.name+' <small style="color:var(--dim);font-weight:500">'+FRAME_ART[k].alias+'</small></span><span class="cm">HP '+f.hp+' · MOVE '+(f.mv>=8?'∞':f.mv)+'</span><span class="cp">['+f.passive+'] '+f.pdesc+'</span></span>';
+    b.innerHTML='<span class="in"><canvas width="184" height="184"></canvas><span class="cn">'+f.name+' <small style="color:var(--dim);font-weight:500">'+FRAME_ART[k].alias+'</small></span><span class="fst"><em>HP</em><span class="fb"><i style="width:'+Math.round(f.hp/200*100)+'%"></i></span><b>'+f.hp+'</b></span><span class="fst"><em>MOVE</em><span class="fp">'+Array.from({length:8},(_,i)=>'<i'+(i<f.mv?' class="on"':'')+'></i>').join('')+'</span><b>'+(f.mv>=8?'∞':f.mv)+'</b></span><span class="cp">['+f.passive+'] '+f.pdesc+'</span></span>';
     b.onclick=()=>{CFG.frame=k;refreshSetup();};fEl.appendChild(b);
   }
   const wEl=$('cWeapons');wEl.innerHTML='';
   for(const [k,w] of Object.entries(WEAPONS)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><span class="cn">'+w.name+'</span><span class="cm">BIT '+w.ap+' · DMG '+w.dmg+' · RNG '+(w.range>=99?'∞':w.range)+'</span><span class="cp">'+w.desc+'</span><span class="rt">'+w.rtag+'</span></span>';
-    b.onclick=()=>{CFG.weapon=k;refreshSetup();};wEl.appendChild(b);
+    b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn">'+w.name+'</span><span class="cm">BIT '+w.ap+' · DMG '+w.dmg+' · RNG '+(w.range>=99?'∞':w.range)+'</span><span class="cp">'+w.desc+'</span><span class="rt">'+w.rtag+'</span></span>';
+    b.onclick=()=>{CFG.weapon=k;refreshSetup();};wEl.appendChild(b);drawMini(b.querySelector('canvas.mg'),'atk',k,w.color);
   }
   const sEl=$('cSkills');sEl.innerHTML='';
   for(const [k,s] of Object.entries(SKILLS)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><span class="ord"></span><span class="cn">'+s.name+'</span><span class="cm">CD '+s.cd+(s.ap?' · BIT '+s.ap:'')+(s.range?' · RNG '+s.range:'')+'</span><span class="cp">'+s.desc+'</span></span>';
+    const cat=SKILL_CAT[k]||['自分','self'];
+    b.innerHTML='<span class="in"><span class="ord"></span>'+(s.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn">'+s.name+'<span class="ctag '+cat[1]+'">'+cat[0]+'</span></span><span class="cm">CD '+s.cd+(s.ap?' · BIT '+s.ap:'')+(s.range?' · RNG '+s.range:'')+'</span><span class="cp">'+s.desc+'</span></span>';
     b.onclick=()=>{const i=CFG.skills.indexOf(k);if(i>=0){if(CFG.skills.length>1)CFG.skills.splice(i,1);}else{if(CFG.skills.length>=2)CFG.skills[1]=k;else CFG.skills.push(k);}refreshSetup();};
-    sEl.appendChild(b);
+    sEl.appendChild(b);if(s.tgt!=='none')drawMini(b.querySelector('canvas.mg'),'sk',k,'#2dffa8');
   }
   drawFrameThumbs();
 }
@@ -3688,15 +3785,15 @@ function refreshSetup(){
   document.querySelectorAll('#cSkills .card').forEach(b=>{const i=CFG.skills.indexOf(b.dataset.k);b.classList.toggle('sel',i>=0);const o=b.querySelector('.ord');if(o)o.textContent=i>=0?String(i+1):'';});
   if(!ULTS[CFG.ult]||ULTS[CFG.ult].frame!==CFG.frame)CFG.ult=ULT_OF(CFG.frame)[0];
   {const uEl=$('cUlts');if(uEl){uEl.innerHTML='';for(const k of ULT_OF(CFG.frame)){const d=ULTS[k];const b=document.createElement('button');b.className='card'+(k===CFG.ult?' sel':'');b.dataset.k=k;
-    b.innerHTML='<span class="in"><span class="cn" style="color:#ffd23a">★ '+d.name+'</span><span class="cm">'+d.role+'</span><span class="cp">'+d.desc+'</span></span>';
-    b.onclick=()=>{CFG.ult=k;refreshSetup();};uEl.appendChild(b);}}}
+    b.innerHTML='<span class="in">'+(d.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn" style="color:#ffd23a">★ '+d.name+'</span><span class="cm">'+d.role+'</span><span class="cp">'+d.desc+'</span></span>';
+    b.onclick=()=>{CFG.ult=k;refreshSetup();};uEl.appendChild(b);if(d.tgt!=='none')drawMini(b.querySelector('canvas.mg'),'ult',k,ULT_COLOR);}}}
   const f=FRAMES[CFG.frame],w=WEAPONS[CFG.weapon];
   $('pvName').textContent=(ED.pro&&CFG.mech)?CFG.mech:f.name;$('pvRole').textContent=(ED.pro&&CFG.mech?f.name+' · ':'')+f.role;
   $('pvHp').style.width=(f.hp/200*100)+'%';$('pvHpN').textContent=f.hp;
   $('pvAp').style.width=(f.mv/8*100)+'%';$('pvApN').textContent=f.mv>=8?'∞':f.mv;
   $('pvDmg').style.width=(Math.max(8,w.dmg)/50*100)+'%';$('pvDmgN').textContent=w.dmg;
   $('pvPas').innerHTML='<b>['+f.passive+']</b><br>'+f.pdesc;
-  $('pvW').textContent=w.name+' — '+w.rtag;
+  $('pvW').textContent=w.name+' — '+w.rtag;drawMini($('pvMg'),'atk',CFG.weapon,w.color);
   $('pvS0').textContent=CFG.skills[0]?SKILLS[CFG.skills[0]].name:'—';$('pvS1').textContent=CFG.skills[1]?SKILLS[CFG.skills[1]].name:'—';$('pvU').textContent='★ '+ULTS[CFG.ult].name;
   $('bStart').disabled=CFG.skills.length<1;
   drawFrameThumbs();
