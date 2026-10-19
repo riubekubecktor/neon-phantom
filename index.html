@@ -266,6 +266,46 @@ button:disabled{cursor:not-allowed}
 #hint{display:block;padding:5px 10px 4px 12px;font:400 16px/1.15 var(--fv);letter-spacing:.04em;color:#dff6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,rgba(0,240,255,.08),transparent);pointer-events:none;border-top:1px solid rgba(0,240,255,.25)}
 #hint b{color:var(--y);font-weight:400}
+/* ── borders only where they carry meaning: selected, active mode, primary action ── */
+.btn:not(.b-exec):not(.on):not(.keep){--bc:transparent}
+.b-cyan>.in{background:linear-gradient(180deg,rgba(0,240,255,.13),rgba(0,240,255,.04)),linear-gradient(180deg,var(--panel2),var(--panel))}
+.b-org>.in{background:linear-gradient(180deg,rgba(255,138,42,.14),rgba(255,138,42,.04)),linear-gradient(180deg,var(--panel2),var(--panel))}
+.b-grn>.in{background:linear-gradient(180deg,rgba(45,255,168,.12),rgba(45,255,168,.03)),linear-gradient(180deg,var(--panel2),var(--panel))}
+.b-ult>.in{background:linear-gradient(180deg,rgba(255,210,58,.14),rgba(255,210,58,.03)),linear-gradient(180deg,var(--panel2),var(--panel))}
+.b-ult.ready:not(:disabled){--bc:#ffd23a}
+.btn.ghost>.in{background:transparent!important}
+.btn.ghost .bt{color:#9fb3d6}.btn.ghost:hover .bt{color:#fff;text-decoration:underline}
+.card:not(.sel){--bc:transparent}
+.card:not(.sel):hover{--bc:#2c4676}
+.starter{border-color:transparent}
+.starter:hover{border-color:#ffd23a}
+/* ── folding: open-only information ── */
+.sect h3.fold{cursor:pointer;user-select:none}
+.sect h3.fold .fi{font:400 16px var(--fv);color:var(--dim);margin-left:-4px}
+.sect.folded>:not(h3){display:none!important}
+.dtg{margin-left:auto;font:400 14px var(--fv);letter-spacing:.04em;color:var(--dim);background:none;border:0;cursor:pointer;padding:0 2px;order:3}
+.dtg:hover{color:#fff}
+.sect h3:has(.dtg)::after{order:2}
+.cards.w:not(.showdesc) .card:not(.sel):not(:hover) .cp,.cards.s:not(.showdesc) .card:not(.sel):not(:hover) .cp{display:none}
+.lhead.fold{cursor:pointer;user-select:none}
+.lhead .fi{color:var(--dim);margin-left:6px}
+#logPanel.folded{flex:0 0 auto!important;height:auto!important}#logPanel.folded #log{flex:none;max-height:2.7em;overflow:hidden}
+.sideinfo.folded .kh{display:none}
+#hud .eq{display:none}
+#hud.detail .eq{display:block}
+#hud .hp{cursor:pointer}
+.hpmore{position:absolute;right:6px;bottom:3px;font:400 13px var(--fv);color:var(--dim2);pointer-events:none}
+#hud.detail .hpmore{transform:rotate(180deg)}
+.pvtg{display:none;width:100%;margin-top:8px;font:400 15px var(--fv);color:var(--dim);background:rgba(255,255,255,.04);border:0;padding:6px;cursor:pointer}
+.pvtg:hover{color:#fff}
+/* the start button is always within reach */
+.sfoot{position:sticky;bottom:0;z-index:5;padding:10px 0 12px;background:linear-gradient(180deg,rgba(4,5,11,0),rgba(4,5,11,.92) 30%)}
+@media (max-width:560px){
+  .pvbox #pv{max-width:190px;margin:0 auto}
+  .pvbox:not(.open) .pvmg,.pvbox:not(.open) .pvpas,.pvbox:not(.open) .loadout,.pvbox:not(.open) .mname{display:none}
+  .pvtg{display:block}
+  .sfoot .btn.ghost>.in{padding:4px 6px}
+}
 /* katakana reading above English names */
 ruby{ruby-position:over;ruby-align:center}
 rt{font:400 9px/1.1 var(--fj);letter-spacing:.04em;color:#8ea6cc;text-transform:none;text-shadow:none}
@@ -472,22 +512,23 @@ header.title{position:relative}
           <div class="lo"><span>SKILL 2</span><b id="pvS1">—</b></div>
           <div class="lo"><span>ULT</span><b id="pvU">—</b></div>
         </div>
+        <button class="pvtg" id="pvTg">詳細を表示 ▾</button>
       </div></section>
       <section>
         <div class="sect"><h3>STARTER<i>まずはこれ</i></h3><div class="starters" id="cStarters"></div></div>
-        <div class="sect"><h3>PRESET<i id="psCnt">0/2</i></h3><div class="presets" id="cPresets"></div></div>
-        <div class="nleg">数値の色：<span class="n dmg">ダメージ</span><span class="n hp">HP・回復・防御</span><span class="n cell">マス・射程</span><span class="n bit">BIT</span><span class="n turn">ターン・CD</span><span class="n me">自分</span><span class="n op">相手</span></div>
+        <div class="sect" data-fold="preset"><h3 class="fold"><span class="fi">▸</span>PRESET<i id="psCnt">0/2</i></h3><div class="presets" id="cPresets"></div></div>
+        <div class="sect" data-fold="legend"><h3 class="fold"><span class="fi">▸</span>LEGEND<i>色と図の見方</i></h3><div class="nleg">数値の色：<span class="n dmg">ダメージ</span><span class="n hp">HP・回復・防御</span><span class="n cell">マス・射程</span><span class="n bit">BIT</span><span class="n turn">ターン・CD</span><span class="n me">自分</span><span class="n op">相手</span></div><div class="legline"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例）</span><span><i class="b"></i>爆風・追加</span><span><i class="w"></i>壁</span><span><i class="e"></i>相手</span></div></div>
         <div class="sect"><h3>FRAME<i>01</i></h3><div class="cards f" id="cFrames"></div></div>
-        <div class="sect"><h3>WEAPON<i>02</i></h3><div class="legline"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例）</span><span><i class="b"></i>爆風・追加</span><span><i class="w"></i>壁</span><span><i class="e"></i>相手</span></div><div class="cards w" id="cWeapons"></div></div>
-        <div class="sect"><h3>SKILL × 2<i>03</i></h3><div class="cards s" id="cSkills"></div></div>
+        <div class="sect"><h3>WEAPON<i>02</i><button class="dtg" data-for="cWeapons">説明を表示 ▾</button></h3><div class="cards w" id="cWeapons"></div></div>
+        <div class="sect"><h3>SKILL × 2<i>03</i><button class="dtg" data-for="cSkills">説明を表示 ▾</button></h3><div class="cards s" id="cSkills"></div></div>
         <div class="sect"><h3>ULTIMATE<i>04</i></h3><p class="unote">フレームごとに2種類から1つ。何を選んだかは相手に見えない。ゲージはだいたい6ターン目に満タン（被ダメージが多いほど早い）。1試合に1回だけ撃てる</p><div class="cards u" id="cUlts"></div></div>
       </section>
     </div>
     <div class="sfoot">
-      <button class="btn b-dim" id="bRandom"><span class="in"><span class="bt">RANDOM</span><span class="bs">おまかせ構成</span></span></button>
-      <button class="btn b-dim" id="bHow"><span class="in"><span class="bt">HOW TO PLAY</span><span class="bs">ルール</span></span></button>
-      <button class="btn b-dim" id="bReplays"><span class="in"><span class="bt">REPLAYS</span><span class="bs">リプレイ</span></span></button>
-      <button class="btn b-cyan" id="bOnline"><span class="in"><span class="bt">ONLINE ⇄</span><span class="bs">オンライン対戦</span></span></button>
+      <button class="btn b-dim ghost" id="bRandom"><span class="in"><span class="bt">RANDOM</span><span class="bs">おまかせ構成</span></span></button>
+      <button class="btn b-dim ghost" id="bHow"><span class="in"><span class="bt">HOW TO PLAY</span><span class="bs">ルール</span></span></button>
+      <button class="btn b-dim ghost" id="bReplays"><span class="in"><span class="bt">REPLAYS</span><span class="bs">リプレイ</span></span></button>
+      <button class="btn b-cyan keep" id="bOnline"><span class="in"><span class="bt">ONLINE ⇄</span><span class="bs">オンライン対戦</span></span></button>
       <button class="btn b-exec big" id="bStart"><span class="in"><span class="bt">LOG IN ▶ BATTLE</span><span class="bs">ファントム・クラッシュ開始</span></span></button>
     </div>
     <div class="rivalline">NEXT RIVAL: <b id="rivalName">???</b><span class="lvl" id="cpuLvl"><em>CPU</em><button data-l="EASY">EASY</button><button data-l="NORMAL">NORMAL</button><button data-l="HARD">HARD</button></span></div>
@@ -504,7 +545,7 @@ header.title{position:relative}
           <div class="hpbar" id="h0bar"><i class="gh" id="h0gh"></i><i class="fl" id="h0fl"></i></div>
           <div class="aprow"><span class="lbl">BIT</span><div class="pips" id="h0ap"></div></div>
           <div class="ultrow" id="h0ur"><span class="lbl">ULT</span><div class="ugb"><i id="h0ug"></i></div><b class="un" id="h0un">—</b></div>
-          <div class="eq" id="h0eq"></div>
+          <div class="eq" id="h0eq"></div><span class="hpmore">▾</span>
           <div class="tags" id="h0tg"></div>
         </div></div>
         <div class="plate hc"><div class="in">
@@ -516,7 +557,7 @@ header.title{position:relative}
           <div class="hpbar" id="h1bar"><i class="gh" id="h1gh"></i><i class="fl" id="h1fl"></i></div>
           <div class="aprow"><span class="lbl" id="h1call">—</span></div>
           <div class="ultrow" id="h1ur"><span class="lbl">ULT</span><div class="ugb"><i id="h1ug"></i></div><b class="un" id="h1un">—</b></div>
-          <div class="eq" id="h1eq"></div>
+          <div class="eq" id="h1eq"></div><span class="hpmore">▾</span>
           <div class="tags" id="h1tg"></div>
         </div></div>
       </div>
@@ -535,8 +576,8 @@ header.title{position:relative}
         <button class="btn b-grn" id="bSk0"><span class="in"><span class="bt" id="sk0N">SKILL</span><span class="bs" id="sk0S">—</span><span class="cdv" id="sk0C"></span></span></button>
         <button class="btn b-grn" id="bSk1"><span class="in"><span class="bt" id="sk1N">SKILL</span><span class="bs" id="sk1S">—</span><span class="cdv" id="sk1C"></span></span></button>
         <button class="btn b-ult" id="bUlt"><span class="in"><span class="bt" id="ultN">ULT</span><span class="bs" id="ultS">—</span><span class="ugf"></span></span></button>
-        <button class="btn b-dim" id="bUndo"><span class="in"><span class="bt">UNDO</span><span class="bs">1つ戻す</span></span></button>
-        <button class="btn b-mag" id="bReset"><span class="in"><span class="bt">RESET</span><span class="bs">全消去</span></span></button>
+        <button class="btn b-dim ghost" id="bUndo"><span class="in"><span class="bt">UNDO</span><span class="bs">1つ戻す</span></span></button>
+        <button class="btn b-mag ghost" id="bReset"><span class="in"><span class="bt">RESET</span><span class="bs">全消去</span></span></button>
         <button class="btn b-exec" id="bExec"><span class="in"><span class="bt">EXECUTE ▶▶</span><span class="bs">同時実行</span></span></button>
       </div>
       <div class="plate" id="rbar" hidden><div class="in">
@@ -548,10 +589,11 @@ header.title{position:relative}
     </div>
     <div id="side">
       <div class="plate" id="logPanel"><div class="in">
-        <div class="lhead"><span>BATTLE LOG</span><span class="rec">● REC</span></div>
+        <div class="lhead fold" id="logHead"><span>BATTLE LOG<span class="fi">▾</span></span><span class="rec">● REC</span></div>
         <div id="log"></div>
       </div></div>
-      <div class="plate sideinfo"><div class="in">
+      <div class="plate sideinfo" id="keysPanel"><div class="in">
+        <div class="lhead fold" id="keysHead"><span>KEYS<span class="fi">▾</span></span></div>
         <div class="kh">
           <kbd>M</kbd><span>移動</span><kbd>A</kbd><span>攻撃</span><kbd>1</kbd><span>スキル1</span><kbd>2</kbd><span>スキル2</span><kbd>U</kbd><span>ULT</span><kbd>T</kbd><span>危険範囲</span>
           <kbd>Z</kbd><span>UNDO</span><kbd>R</kbd><span>RESET</span><kbd>ENTER</kbd><span>EXECUTE</span><kbd>ESC</kbd><span>照準キャンセル</span>
@@ -759,6 +801,10 @@ const SKILLS={
   REFLECT: {name:'REFLECT', cd:5,tgt:'none',desc:'このターン最初に受ける射撃ダメージを無効化し、70%を相手へ跳ね返す'},
   ANCHOR:  {name:'ANCHOR',  cd:4,tgt:'none',desc:'このターン、吹き飛ばし・引き寄せ・入替・スタン無効＆被ダメ-25%'},
   OVERCLOCK:{name:'OVERCLOCK',cd:4,ap:0,tgt:'none',desc:'BIT消費なし。このターンの武器ダメージ+50%'},
+  BACKSTEP:{name:'BACKSTEP',cd:4,tgt:'none',desc:'このターン、攻撃が当たる瞬間に1マス下がって1回だけ自動で回避（下がれない時は被弾）'},
+  PARRY:   {name:'PARRY',   cd:5,tgt:'none',desc:'発動した手と次の手の間、最初に受ける近接攻撃を無効化して相手をスタン'},
+  FORTIFY: {name:'FORTIFY', cd:6,tgt:'none',desc:'動かない限り、受けるダメージ半分・与えるダメージ1.2倍。解除する1マス目の移動はBIT3倍'},
+  SMOKE:   {name:'SMOKE',   cd:5,tgt:'square',range:3,desc:'3マス以内に3×3の煙。次ターン終了まで、煙の中の機体には射撃が届かない'},
 };
 /* ULTIMATES — 2 per frame, pick 1 (hidden from the rival until used). One use per match. */
 const ULTS={
@@ -780,7 +826,9 @@ const QUICK_ULT=new Set(['COUNTER_RUSH','OVERDRIVE','IRON_WALL','PHANTOM_MIRAGE'
 const isHack=p=>(p||[]).some(a=>a&&a.type==='ult'&&a.key==='SYSTEM_HACK');
 const HACK_MARK=()=>({type:'ult',key:'SYSTEM_HACK',rx:0,ry:0});
 /* these resolve before attacks inside a step (reactive / self-buff) */
-const QUICK=new Set(['SHIELD','REPAIR','X_RAY','JAMMER','SILENCE','CHARGE','REFLECT','ANCHOR','OVERCLOCK']);
+const QUICK=new Set(['SHIELD','REPAIR','X_RAY','JAMMER','SILENCE','CHARGE','REFLECT','ANCHOR','OVERCLOCK','BACKSTEP','PARRY','FORTIFY','SMOKE']);
+const FORT_TAKEN=.5,FORT_DEALT=1.2,FORT_MOVE=3;
+const inSmoke=u=>!!S.smokes&&S.smokes.some(m=>Math.abs(m.x-u.x)<=1&&Math.abs(m.y-u.y)<=1);
 const CPU_LEVELS=['EASY','NORMAL','HARD'];
 const RIVALS=['CRIMSON JACK','KAGEROU','VANTA SAGE','RED ORBIT','MOTHRA-9','GLITCH QUEEN','NOVA HOUND','SHIKIGAMI','TOKYO DRIFTER','LUNA VOLT'];
 const TEAM=['#00f0ff','#ff2a8a'];
@@ -797,7 +845,7 @@ function makeUnit(side,cfg,pos){
     skills:cfg.skills.map(k=>({key:k,cd:0,usedTurn:-1})),
     x:pos[0],y:pos[1],sx:pos[0],sy:pos[1],hp:f.hp,maxHp:f.hp,baseAp:f.ap,ap:f.ap,mv:f.mv||N,nextApMod:0,
     shield:false,stunned:false,xray:false,reflect:false,anchor:false,overclock:false,silencedTurn:-1,gutsUsed:false,moveDist:0,
-    facing:side===0?7:3,alive:true,revealed:[],canceled:false,
+    facing:side===0?7:3,alive:true,revealed:[],canceled:false,backstep:false,parryUntil:-1,fort:false,
     ult:(ULTS[cfg.ult]&&ULTS[cfg.ult].frame===cfg.frame)?cfg.ult:ULT_OF(cfg.frame)[0],gauge:0,ultUsed:false,counter:null,iron:false,odNext:false,overheat:false,lockMv:0,mirage:null,haunt:null,crit:false,ultHold:false};
 }
 
@@ -841,7 +889,7 @@ function newMatch(seed,cfg0,cfg1,opt){
   if(opt.mirror)map=map.map((r,y)=>r.map((_,x)=>map[N-1-y][N-1-x]));
   S={seed,map,wallHp:{},turn:1,step:0,phase:'plan',over:false,hostSide:opt.mirror?1:0,
      units:[makeUnit(0,cfg0,spawns[0]),makeUnit(1,cfg1,spawns[1])],
-     spikes:[],clusters:[],mortars:[],burns:[],mines:[],orbitals:[],stats:[{dealt:0,taken:0},{dealt:0,taken:0}]};
+     spikes:[],clusters:[],mortars:[],burns:[],mines:[],orbitals:[],smokes:[],stats:[{dealt:0,taken:0},{dealt:0,taken:0}]};
   startTurn();
   return S;
 }
@@ -879,6 +927,19 @@ function dealDamage(t,amt,src){
   if(t.reflect&&src&&src.ranged&&sSide!=null&&sSide!==t.side){
     t.reflect=false;ev('reflect',{side:t.side,to:sSide});ev('delay',{ms:150});
     dealDamage(S.units[sSide],Math.round(amt*REFLECT_RATE),{side:t.side,refl:true});return 0;}
+  if(src&&src.atk&&sSide!=null&&sSide!==t.side){
+    if(src.ranged&&inSmoke(t)){ev('smokeBlock',{side:t.side});return 0;}
+    if(src.melee&&t.parryUntil>=S.step){t.parryUntil=-1;ev('parry',{side:t.side,to:sSide});ev('delay',{ms:140});stunUnit(S.units[sSide]);return 0;}
+    if(t.backstep){
+      const a=S.units[sSide];let dx=Math.sign(t.x-a.x),dy=Math.sign(t.y-a.y);if(!dx&&!dy)dx=1;
+      for(const [mx,my] of [[dx,dy],[dx,0],[0,dy]]){
+        if(!mx&&!my)continue;const nx=t.x+mx,ny=t.y+my;
+        if(isFloor(nx,ny)&&!unitAt(nx,ny,-1)){const from={x:t.x,y:t.y};t.x=nx;t.y=ny;t.backstep=false;t.fort=false;ev('backstep',{side:t.side,from,to:{x:nx,y:ny}});onEnter(t);return 0;}
+      }
+      t.backstep=false;ev('status',{side:t.side,text:'NO ROOM'});
+    }
+  }
+  if(t.fort)amt=Math.max(1,Math.round(amt*FORT_TAKEN));
   if(t.shield){t.shield=false;const ab=Math.min(amt,SHIELD_ABS);ev('block',{side:t.side,amount:ab});amt-=ab;if(amt<=0)return 0;ev('delay',{ms:120});}
   if(t.anchor)amt=Math.max(1,Math.round(amt*.75));
   if(t.frame==='HEAVY'&&!t.gutsUsed&&t.hp-amt<=0){
@@ -999,7 +1060,7 @@ function phaseMove(acts){
   for(let s=0;s<2;s++){
     if(!ok[s])continue;
     const u=U[s],from={x:u.x,y:u.y};
-    u.x=it[s].d.x;u.y=it[s].d.y;u.moveDist++;
+    u.x=it[s].d.x;u.y=it[s].d.y;u.moveDist++;u.fort=false;
     ev('move',{side:s,from,to:{x:u.x,y:u.y}});
   }
   for(let s=0;s<2;s++)if(ok[s])onEnter(U[s]);
@@ -1014,10 +1075,10 @@ function doAttack(u,a){
   const k=dirIndex(a.rx,a.ry),[dx,dy]=DIR8[k];
   u.facing=k;
   const bonus=u.frame==='GHOST'?momBonus(u.moveDist):0;
-  const mult=(u.overclock?OC_MULT:1)*(u.crit?MIRAGE_CRIT:1),oc=v=>Math.round(v*mult);
+  const mult=(u.overclock?OC_MULT:1)*(u.crit?MIRAGE_CRIT:1)*(u.fort?FORT_DEALT:1),oc=v=>Math.round(v*mult);
   if(u.crit){u.crit=false;ev('crit',{side:u.side});}
   const dmg=oc(W.dmg+bonus);
-  const src={side:u.side,ranged:!!W.ranged};
+  const src={side:u.side,ranged:!!W.ranged,melee:!W.ranged&&!['spike','cluster','mortar'].includes(W.kind),atk:true};
   ev('action',{side:u.side,name:W.name,color:W.color,bonus,oc:u.overclock});
 
   switch(W.kind){
@@ -1091,7 +1152,7 @@ function doAttack(u,a){
       }
       const pts=[];for(let s=0;s<=stop;s++)pts.push({x:sx+dx*s,y:sy+dy*s});
       ev('fx',{type:'dash',pts,color:W.color,side:u.side});
-      if(stop>0){u.x=sx+dx*stop;u.y=sy+dy*stop;ev('dashMove',{side:u.side,from:{x:sx,y:sy},to:{x:u.x,y:u.y}});}
+      if(stop>0){u.fort=false;u.x=sx+dx*stop;u.y=sy+dy*stop;ev('dashMove',{side:u.side,from:{x:sx,y:sy},to:{x:u.x,y:u.y}});}
       if(target){
         ev('delay',{ms:70*hitStep});
         const bon=u.frame==='GHOST'?momBonus(u.moveDist+hitStep-1):0;
@@ -1203,13 +1264,13 @@ function doSkill(u,a){
   switch(a.key){
     case 'BLINK':{
       const tx=u.x+a.rx,ty=u.y+a.ry;
-      if(isFloor(tx,ty)&&!unitAt(tx,ty,u.side)){const from={x:u.x,y:u.y};u.x=tx;u.y=ty;ev('teleport',{side:u.side,from,to:{x:tx,y:ty},kind:'blink'});onEnter(u);}
+      if(isFloor(tx,ty)&&!unitAt(tx,ty,u.side)){const from={x:u.x,y:u.y};u.x=tx;u.y=ty;u.fort=false;ev('teleport',{side:u.side,from,to:{x:tx,y:ty},kind:'blink'});onEnter(u);}
       else ev('fail',{side:u.side,text:'BLINK FAILED'});
       break;}
     case 'REWIND':{
       if(u.x===u.sx&&u.y===u.sy){ev('fail',{side:u.side,text:'NO CHANGE'});break;}
       if(!isFloor(u.sx,u.sy)||unitAt(u.sx,u.sy,u.side)){ev('fail',{side:u.side,text:'REWIND BLOCKED'});break;}
-      const from={x:u.x,y:u.y};u.x=u.sx;u.y=u.sy;ev('teleport',{side:u.side,from,to:{x:u.x,y:u.y},kind:'rewind'});onEnter(u);
+      const from={x:u.x,y:u.y};u.x=u.sx;u.y=u.sy;u.fort=false;ev('teleport',{side:u.side,from,to:{x:u.x,y:u.y},kind:'rewind'});onEnter(u);
       break;}
     case 'SHIELD':u.shield=S.turn+1;ev('fx',{type:'shield',x:u.x,y:u.y,side:u.side});break;
     case 'REPAIR':ev('fx',{type:'repair',x:u.x,y:u.y});healUnit(u,REPAIR_HP,'REPAIR');break;
@@ -1237,7 +1298,7 @@ function doSkill(u,a){
       if(o.alive&&o.anchor){ev('status',{side:o.side,text:'ANCHORED'});ev('fail',{side:u.side,text:'SWAP FAILED'});}
       else if(o.alive&&cheb(u,o)<=def.range){
         const A={x:u.x,y:u.y},B={x:o.x,y:o.y};
-        u.x=B.x;u.y=B.y;o.x=A.x;o.y=A.y;
+        u.x=B.x;u.y=B.y;o.x=A.x;o.y=A.y;u.fort=false;
         ev('fx',{type:'swap',a:A,b:B});
         ev('teleport',{side:u.side,from:A,to:B,kind:'swap'});ev('teleport',{side:o.side,from:B,to:A,kind:'swap'});
         onEnter(u);onEnter(o);
@@ -1252,6 +1313,11 @@ function doSkill(u,a){
       break;}
     case 'REFLECT':u.reflect=true;ev('fx',{type:'reflect',x:u.x,y:u.y,side:u.side});break;
     case 'ANCHOR':u.anchor=true;ev('fx',{type:'anchor',x:u.x,y:u.y,side:u.side});break;
+    case 'BACKSTEP':u.backstep=true;ev('fx',{type:'reflect',x:u.x,y:u.y,side:u.side});ev('status',{side:u.side,text:'BACKSTEP'});break;
+    case 'PARRY':u.parryUntil=S.step+1;ev('fx',{type:'anchor',x:u.x,y:u.y,side:u.side});ev('status',{side:u.side,text:'PARRY'});break;
+    case 'FORTIFY':u.fort=true;ev('fx',{type:'shield',x:u.x,y:u.y,side:u.side});ev('status',{side:u.side,text:'FORTIFY'});break;
+    case 'SMOKE':{const tx=u.x+a.rx,ty=u.y+a.ry;if(!inB(tx,ty)){ev('fail',{side:u.side,text:'NO TARGET'});break;}
+      S.smokes=S.smokes.filter(m=>m.owner!==u.side);S.smokes.push({x:tx,y:ty,owner:u.side,expire:S.turn+1});ev('smokeSet',{x:tx,y:ty,side:u.side});break;}
     case 'OVERCLOCK':u.overclock=true;ev('fx',{type:'overclock',x:u.x,y:u.y,side:u.side});break;
     case 'SILENCE':o.silencedTurn=S.turn+1;o.nextApMod-=SILENCE_AP;
       if(o.shield||o.reflect||o.anchor||o.overclock||o.xray){o.shield=false;o.reflect=false;o.anchor=false;o.overclock=false;o.xray=false;ev('status',{side:o.side,text:'BUFFS PURGED'});}ev('fx',{type:'silence',x:o.x,y:o.y});ev('status',{side:o.side,text:'SILENCED NEXT'});break;
@@ -1335,12 +1401,13 @@ function endTurn(){
   for(const u of S.units){
     if(u.shield&&u.shield<=S.turn){u.shield=false;ev('shieldEnd',{side:u.side});}
     u.stunned=false;u.xray=false;u.reflect=false;u.anchor=false;u.overclock=false;u.moveDist=0;u.canceled=false;
-    u.iron=false;u.counter=null;u.ultHold=false;u.crit=false;if(u.haunt&&u.haunt.until<=S.turn)u.haunt=null;
+    u.iron=false;u.counter=null;u.ultHold=false;u.backstep=false;u.parryUntil=-1;u.crit=false;if(u.haunt&&u.haunt.until<=S.turn)u.haunt=null;
     for(const sk of u.skills){if(sk.cd>0&&sk.usedTurn!==S.turn)sk.cd=Math.max(0,sk.cd-(u.frame==='ENGINEER'?2:1));}
   }
   // VOID areas end at the close of their 2nd active turn
   S.spikes=S.spikes.filter(sp=>{if(sp.state==='zone'&&sp.expire<=S.turn){ev('zoneEnd',{x:sp.x,y:sp.y});return false;}return true;});
   S.clusters=[];S.mortars=[];
+  if(S.smokes&&S.smokes.length){S.smokes=S.smokes.filter(m=>{if(m.expire<=S.turn){ev('smokeEnd',{x:m.x,y:m.y});return false;}return true;});}
   S.burns=S.burns.filter(b=>{if(b.expire<=S.turn){ev('burnEnd',{x:b.x,y:b.y});return false;}return true;});
   S.turn++;
 }
@@ -1376,14 +1443,15 @@ function sanitizePlan(side,plan){
   let ap=u.ap,mvl=u.lockMv>=S.turn?0:u.mv;const out=[];const used=new Set();
   const ultOk=!u.ultUsed&&u.gauge>=GAUGE_MAX;let ultIn=false;
   if(ultOk&&u.ult==='OVERDRIVE'&&plan.some(a=>a&&a.type==='ult'&&a.key==='OVERDRIVE')){ap+=OD_BIT;mvl+=OD_MV;}
+  let fort=u.fort;
   for(const a of plan.slice(0,16)){
     if(!a||typeof a!=='object')break;
     const n=v=>Number.isInteger(v)&&Math.abs(v)<N;
-    if(a.type==='move'){if(!n(a.dx)||!n(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1||ap<1||mvl<1)break;ap-=1;mvl-=1;out.push({type:'move',dx:a.dx,dy:a.dy});}
-    else if(a.type==='attack'){const W=WEAPONS[u.weapon];if(!n(a.rx)||!n(a.ry)||(!a.rx&&!a.ry)||ap<W.ap)break;ap-=W.ap;out.push({type:'attack',rx:a.rx,ry:a.ry});}
+    if(a.type==='move'){const mc=fort?FORT_MOVE:1;if(!n(a.dx)||!n(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1||ap<mc||mvl<1)break;ap-=mc;mvl-=1;fort=false;out.push({type:'move',dx:a.dx,dy:a.dy});}
+    else if(a.type==='attack'){const W=WEAPONS[u.weapon];if(!n(a.rx)||!n(a.ry)||(!a.rx&&!a.ry)||ap<W.ap)break;ap-=W.ap;if(W.kind==='dash')fort=false;out.push({type:'attack',rx:a.rx,ry:a.ry});}
     else if(a.type==='ult'){if(!ultOk||ultIn||a.key!==u.ult||!n(a.rx||0)||!n(a.ry||0))break;ultIn=true;out.push({type:'ult',key:a.key,rx:a.rx||0,ry:a.ry||0});
       if(a.key==='PHANTOM_MIRAGE')break;if(a.key==='GIGA_CANNON')mvl=0;}
-    else if(a.type==='skill'){const sk=u.skills[a.slot];if(!sk||sk.key!==a.key||used.has(a.key))break;const c=SKILLS[a.key].ap||0;if(ap<c||!n(a.rx||0)||!n(a.ry||0))break;ap-=c;used.add(a.key);out.push({type:'skill',slot:a.slot,key:a.key,rx:a.rx||0,ry:a.ry||0});}
+    else if(a.type==='skill'){const sk=u.skills[a.slot];if(!sk||sk.key!==a.key||used.has(a.key))break;const c=SKILLS[a.key].ap||0;if(ap<c||!n(a.rx||0)||!n(a.ry||0))break;ap-=c;used.add(a.key);if(a.key==='FORTIFY')fort=true;else if(['BLINK','REWIND','SWAP'].includes(a.key))fort=false;out.push({type:'skill',slot:a.slot,key:a.key,rx:a.rx||0,ry:a.ry||0});}
     else break;
   }
   return out;
@@ -1484,6 +1552,7 @@ function previewGeom(kind,key,ox,oy,tx,ty,xray){
       case 'BLINK':case 'WALL_GEN':case 'MINE':g.main=[{x:tx,y:ty}];break;
       case 'HOOK':{let x=ox+dx,y=oy+dy;while(isFloor(x,y)){g.main.push({x,y});if(unitAt(x,y,0))break;x+=dx;y+=dy;}break;}
       case 'SWAP':g.sub=targetOptions(ox,oy,'swap',5,0);break;
+      case 'SMOKE':g.main=[{x:tx,y:ty}];g.sub=box9(tx,ty);break;
     }
   }
   return g;
@@ -1651,6 +1720,11 @@ function aiPlanCore(side,opt){
   const OW=WEAPONS[op.weapon];
   if(has('REFLECT')&&OW.ranged&&d0<=6&&R()<.55)use('REFLECT');
   if(has('ANCHOR')&&d0<=3&&(['pile','knuckle','shock','dash'].includes(OW.kind)||op.revealed.includes('HOOK')||op.revealed.includes('SWAP'))&&R()<.6)use('ANCHOR');
+  if(me.fort){if(aiFindAttack(me,op,pos,ap,false,0)&&R()<.75)mvl=0;else ap=Math.max(0,ap-(FORT_MOVE-1));}
+  else if(has('FORTIFY')&&aiFindAttack(me,op,pos,ap,false,0)&&R()<.55){use('FORTIFY');mvl=0;}
+  if(has('PARRY')&&d0<=2&&!OW.ranged&&!['spike','cluster','mortar'].includes(OW.kind)&&R()<.7)use('PARRY');
+  if(has('BACKSTEP')&&d0<=4&&R()<.55)use('BACKSTEP');
+  if(has('SMOKE')&&OW.ranged&&d0>=2&&R()<.6){const k=dirIndex(op.x-pos.x,op.y-pos.y),[sx,sy]=DIR8[k];if(inB(pos.x+sx,pos.y+sy))use('SMOKE',sx,sy);}
   if(has('OVERCLOCK')&&ap-1>=W.ap&&aiFindAttack(me,op,pos,ap-1,false,mvl)&&R()<.8)use('OVERCLOCK');
   let attacks=0;
   const realOp=S.units[1-side];
@@ -1887,6 +1961,12 @@ function handleEvent(type,d){
     case 'counterHit':{const t=S.units[d.to];addFx({kind:'burst',x:t.x,y:t.y,color:'#ff6a1a',dur:620});addFx({kind:'ring',x:t.x,y:t.y,color:'#ff6a1a',dur:520,r0:.1,r1:.9});V.shake=Math.max(V.shake,14);
       log(tagName(d.side)+' <span class="w">COUNTER RUSH — 受けた痛みを'+d.amount+'にして返す！</span>','p'+d.side);break;}
     case 'orbitalMark':banner('ORBITAL LOCK','NEXT TURN · 3×3 · '+ORBITAL_DMG,'#ff3355',900,awayY(d.y));log('ORBITAL STRIKE 照準 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次のターンの全行動の後に着弾</span>','p'+d.side);break;
+    case 'smokeSet':addFx({kind:'cells',cells:box9(d.x,d.y),color:'#c8d2e6',dur:600});smoke(cxOf(d.x),cxOf(d.y),14,'#8a96b0',{life:60,a:.6});log(tagName(d.side)+' <span class="w">SMOKE</span> — 煙の中には射撃が届かない（次ターン終了まで）','p'+d.side);break;
+    case 'smokeEnd':log('SMOKE が晴れた','sys');break;
+    case 'smokeBlock':floatNum(d.side,'SMOKE!','#c8d2e6',C*.32);log(tagName(d.side)+' 煙に隠れて射撃を防いだ','p'+d.side);break;
+    case 'parry':{const p=unitPx(d.side);sparks(p.x,p.y,'#ffffff',22,6,{type:'spark',life:16});V.hitstop=now()+110/SPEED;V.shake=Math.max(V.shake,10);floatNum(d.side,'PARRY!!','#ffffff',C*.4,{big:true});
+      log(tagName(d.side)+' <span class="h">PARRY — 近接攻撃を弾いた！</span> '+tagName(d.to)+' はスタン','p'+d.side);break;}
+    case 'backstep':if(vu){vu.tx=d.to.x;vu.ty=d.to.y;vu.spd=24;}footLabel(d.side,'DODGE','#7af0ff');log(tagName(d.side)+' <span class="h">BACKSTEP — 1マス下がって回避！</span>','p'+d.side);break;
     case 'crit':floatNum(d.side,'CRITICAL ×1.5',ULT_COLOR,C*.3,{big:true});break;
     case 'hackLog':log(tagName(d.side)+' <span class="w">SYSTEM HACK</span> — 読み切った行動を実行','p'+d.side);break;
     case 'wallBreak':{addFx({kind:'burst',x:d.x,y:d.y,color:'#2dffa8',dur:560});sparks(cxOf(d.x),cxOf(d.y),'#2dffa8',18,4.5,{type:'spark'});debris(cxOf(d.x),cxOf(d.y),'#2dffa8',12,5);log('生成壁が破壊された');break;}
@@ -2287,6 +2367,15 @@ function drawHazards(g,t){
     g.restore();g.fillStyle=bl?'#ffffff':col;g.fillRect(cx-2,cy-2,4,4);
     g.fillStyle=col;g.font='900 '+Math.round(C*.15)+'px Orbitron,DotGothic16';g.textAlign='left';g.textBaseline='top';g.fillText('INCOMING',r.x+4,r.y+4);
   }
+  // smoke clouds
+  for(const m of (S.smokes||[])){
+    const r=areaRect(m.x,m.y);g.save();
+    g.fillStyle='rgba(150,165,190,.26)';g.fillRect(r.x,r.y,r.w,r.h);
+    for(let i=0;i<7;i++){const ph=t*.0006+i*1.7,cx=r.x+r.w*(.2+.6*((Math.sin(ph)+1)/2)),cy=r.y+r.h*(.25+.5*((Math.cos(ph*1.3+i)+1)/2));
+      const rg=g.createRadialGradient(cx,cy,0,cx,cy,C*.7);rg.addColorStop(0,'rgba(200,210,230,.22)');rg.addColorStop(1,'rgba(200,210,230,0)');g.fillStyle=rg;g.fillRect(r.x,r.y,r.w,r.h);}
+    g.strokeStyle='rgba(200,215,240,.5)';g.setLineDash([4,4]);g.strokeRect(r.x+2,r.y+2,r.w-4,r.h-4);g.restore();
+    g.fillStyle='rgba(220,230,250,.85)';g.font='700 '+Math.round(C*.13)+'px Orbitron,DotGothic16';g.textAlign='left';g.textBaseline='bottom';g.fillText('SMOKE',r.x+4,r.y+r.h-3);
+  }
   // orbital strikes (visible to both)
   for(const ob of S.orbitals){
     const r=areaRect(ob.x,ob.y),col='#ff3355',bl=~~(t/120)%2,cx=cxOf(ob.x),cy=cxOf(ob.y);
@@ -2356,18 +2445,18 @@ function budget(u,sim){
   return {ap:Math.max(0,ap),mv:Math.max(0,Math.min(mv,Math.max(0,ap)))};
 }
 function simPlanFor(side,plan){
-  const u=S.units[side];let x=u.x,y=u.y,ap=0,mv=0,xray=false,od=false,lock=u.lockMv>=S.turn,hold=false,ult=false;const used=new Set(),steps=[];
+  const u=S.units[side];let fort=u.fort,x=u.x,y=u.y,ap=0,mv=0,xray=false,od=false,lock=u.lockMv>=S.turn,hold=false,ult=false;const used=new Set(),steps=[];
   for(const a of plan){
     const from={x,y};
-    if(a.type==='move'){if(isFloor(x+a.dx,y+a.dy)){x+=a.dx;y+=a.dy;}ap+=1;mv+=1;}
-    else if(a.type==='attack'){const W=WEAPONS[u.weapon];ap+=W.ap;if(W.kind==='dash'){const k=dirIndex(a.rx,a.ry),dist=Math.max(Math.abs(a.rx),Math.abs(a.ry));let s=0;while(s<dist&&isFloor(x+DIR8[k][0]*(s+1),y+DIR8[k][1]*(s+1)))s++;x+=DIR8[k][0]*s;y+=DIR8[k][1]*s;}}
-    else if(a.type==='skill'){const d=SKILLS[a.key];ap+=d.ap||0;used.add(a.key);
+    if(a.type==='move'){if(isFloor(x+a.dx,y+a.dy)){x+=a.dx;y+=a.dy;}ap+=fort?FORT_MOVE:1;fort=false;mv+=1;}
+    else if(a.type==='attack'){const W=WEAPONS[u.weapon];ap+=W.ap;if(W.kind==='dash'){fort=false;const k=dirIndex(a.rx,a.ry),dist=Math.max(Math.abs(a.rx),Math.abs(a.ry));let s=0;while(s<dist&&isFloor(x+DIR8[k][0]*(s+1),y+DIR8[k][1]*(s+1)))s++;x+=DIR8[k][0]*s;y+=DIR8[k][1]*s;}}
+    else if(a.type==='skill'){const d=SKILLS[a.key];ap+=d.ap||0;used.add(a.key);if(a.key==='FORTIFY')fort=true;else if(['BLINK','REWIND','SWAP'].includes(a.key))fort=false;
       if(a.key==='BLINK'){x+=a.rx;y+=a.ry;}else if(a.key==='REWIND'){x=u.sx;y=u.sy;}else if(a.key==='X_RAY')xray=true;
       else if(a.key==='SWAP'){const o=S.units[1-side];if(cheb({x,y},o)<=5){x=o.x;y=o.y;}}}
     else if(a.type==='ult'){ult=true;if(a.key==='OVERDRIVE')od=true;else if(a.key==='GIGA_CANNON')lock=true;else if(a.key==='PHANTOM_MIRAGE'){x+=a.rx;y+=a.ry;hold=true;}}
     steps.push({a,from,to:{x,y},xray});
   }
-  return {x,y,ap,mv,xray,od,lock,hold,ult,used,steps};
+  return {x,y,ap,mv,xray,od,lock,hold,ult,used,steps,fort};
 }
 function threatNow(){
   const o=S.units[1];if(!o||!o.alive)return new Set();
@@ -3059,6 +3148,7 @@ function tagsFor(u,self){
   if(u.frame==='HEAVY')t.push([u.gutsUsed?'GUTS USED':'GUTS READY',u.gutsUsed?'d':'g']);
   if(u.frame==='ASSAULT'&&u.alive&&u.hp<=u.maxHp*.4)t.push(['ADRENALINE','o']);
   if(u.frame==='GHOST'&&u.moveDist>0)t.push(['MOMENTUM +'+momBonus(u.moveDist),'v']);
+  if(u.fort)t.push(['FORTIFY','g']);if(u.backstep)t.push(['BACKSTEP','g']);if(u.parryUntil>=0)t.push(['PARRY','g']);if(S.smokes&&inSmoke(u))t.push(['IN SMOKE','d']);
   if(u.reflect)t.push(['REFLECT','g']);if(u.anchor)t.push(['ANCHOR','g']);if(u.overclock)t.push(['OVERCLOCK','o']);
   if(u.iron)t.push(['IRON WALL','y']);if(u.counter)t.push(['COUNTER','o']);
   if(u.odNext)t.push(['OVERDRIVE','o']);if(u.overheat)t.push(['OVERHEAT','d']);
@@ -3206,7 +3296,7 @@ function enterMode(mode){
     if(tgt==='dir4'){for(const [dx,dy] of DIR4){let x=sim.x+dx,y=sim.y+dy;while(inB(x,y)){cells.push({x,y});x+=dx;y+=dy;}}}
     else if(tgt==='square')cells=targetOptions(sim.x,sim.y,'square',range,0).filter(c=>!enemyCells().some(q=>q.x===c.x&&q.y===c.y));
     else for(let y=0;y<N;y++)for(let x=0;x<N;x++)cells.push({x,y});}
-  else if(mode==='move'){if(apLeft<1){toast('BITが足りない');return;}const mvLeft=bud.mv;if(mvLeft<1){toast('このターンの移動上限');return;}cells=moveCells(sim.x,sim.y,Math.min(apLeft,mvLeft));tgt='move';}
+  else if(mode==='move'){if(apLeft<1){toast('BITが足りない');return;}const mvLeft=bud.mv;if(mvLeft<1){toast('このターンの移動上限');return;}const stepsAff=sim.fort?(apLeft>=FORT_MOVE?apLeft-FORT_MOVE+1:0):apLeft;if(stepsAff<1){toast('FORTIFY解除にはBIT'+FORT_MOVE+'が必要');return;}cells=moveCells(sim.x,sim.y,Math.min(stepsAff,mvLeft));tgt='move';}
   else if(mode==='atk'){const W=WEAPONS[u.weapon];if(apLeft<W.ap){toast('BITが足りない');return;}tgt=W.tgt==='line'&&sim.xray?'ray':W.tgt;range=W.range;cells=targetOptions(sim.x,sim.y,tgt,range,0);}
   else{const slot=+mode.slice(2);const st=skillState(slot);if(!st.ok){toast(st.why==='CD'?'クールダウン中':st.why);return;}
     const sk=u.skills[slot],d=SKILLS[sk.key];
@@ -3380,7 +3470,7 @@ function renderPresets(){
       so a whole match fits in a short URL. ── */
 let REC=null,LAST_REPLAY=null;
 function cfgRow(c){return [c.frame,c.weapon,c.skills.slice(0,2),String(c.name||''),String(c.mech||''),String(c.ult||'')];}
-function recStart(seed,c0,c1,mirror){REC={v:4,s:seed>>>0,m:mirror?1:0,c:[cfgRow(c0),cfgRow(c1)],t:[],d:Date.now(),on:NET.on?1:0};}
+function recStart(seed,c0,c1,mirror){REC={v:5,s:seed>>>0,m:mirror?1:0,c:[cfgRow(c0),cfgRow(c1)],t:[],d:Date.now(),on:NET.on?1:0};}
 function encAct(a){return a.type==='move'?[0,a.dx,a.dy]:a.type==='attack'?[1,a.rx,a.ry]:a.type==='ult'?[3,a.rx||0,a.ry||0]:[2,a.slot,a.rx||0,a.ry||0];}
 function decAct(x,cfg){if(!Array.isArray(x)||!x.every(v=>Number.isInteger(v)&&Math.abs(v)<N))return null;if(x[0]===0)return {type:'move',dx:x[1],dy:x[2]};if(x[0]===1)return {type:'attack',rx:x[1],ry:x[2]};if(x[0]===3)return {type:'ult',key:cfg.ult||ULT_OF(cfg.frame)[0],rx:x[1]||0,ry:x[2]||0};
   const key=cfg.skills[x[1]];return key?{type:'skill',slot:x[1],key,rx:x[2]||0,ry:x[3]||0}:null;}
@@ -3401,7 +3491,7 @@ async function unpackReplay(code){
   code=String(code||'').trim().replace(/^.*#replay=/,'');const k=code[0],body=b64u.dec(code.slice(1));let txt;
   if(k==='z'){const ds=new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate-raw'));txt=await new Response(ds).text();}
   else if(k==='j')txt=new TextDecoder().decode(body);else throw new Error('bad code');
-  const r=JSON.parse(txt);if(!r||r.v!==4||!Array.isArray(r.c)||!Array.isArray(r.t))throw new Error('bad replay');
+  const r=JSON.parse(txt);if(!r||r.v!==5||!Array.isArray(r.c)||!Array.isArray(r.t))throw new Error('bad replay');
   for(const c of r.c){if(!validCfg({frame:c[0],weapon:c[1],skills:c[2],ult:c[5]||undefined}))throw new Error('bad cfg');}
   return r;
 }
@@ -3484,7 +3574,7 @@ function wireEdition(){
    of one browser play for testing.
    ═════════════════════════════════════════════════════════════ */
 const PEERJS_URLS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
-const NET_V=5,TURN_SEC=20,WAIT_GRACE=45;
+const NET_V=6,TURN_SEC=20,WAIT_GRACE=45;
 const NET={syncs:{},on:false,role:null,link:null,peer:null,code:null,rname:'',rcfg:null,mine:null,theirs:{},deadline:0,tick:null,dropped:false,rematch:{me:false,them:false},name:''};
 function netStatus(t,cls){const el=$('oStat');if(!el)return;el.textContent=t;el.className='lstat'+(cls?' '+cls:'');}
 function loadScript(urls){return new Promise((res,rej)=>{let i=0;const next=()=>{if(i>=urls.length)return rej(new Error('load failed'));const sc=document.createElement('script');sc.src=urls[i++];sc.onload=()=>res();sc.onerror=()=>{sc.remove();next();};document.head.appendChild(sc);};next();});}
@@ -3706,7 +3796,7 @@ function toSetup(){UI.deadline=0;UI.hack=null;if(NET.on)netLeave(true);if(UI.rep
 /* ── setup screen ── */
 /* ── mini range diagrams: real engine geometry on an empty 7×7, self in the middle ── */
 const SKILL_CAT={BLINK:['移動','mv'],REWIND:['移動','mv'],SWAP:['移動','mv'],SHIELD:['防御','df'],REFLECT:['防御','df'],ANCHOR:['防御','df'],REPAIR:['回復','df'],
-  JAMMER:['妨害','jm'],SILENCE:['妨害','jm'],HOOK:['妨害','jm'],CHARGE:['強化','bf'],X_RAY:['強化','bf'],OVERCLOCK:['強化','bf'],WALL_GEN:['設置','st'],MINE:['設置','st']};
+  JAMMER:['妨害','jm'],SILENCE:['妨害','jm'],HOOK:['妨害','jm'],CHARGE:['強化','bf'],X_RAY:['強化','bf'],OVERCLOCK:['強化','bf'],WALL_GEN:['設置','st'],MINE:['設置','st'],BACKSTEP:['防御','df'],PARRY:['防御','df'],FORTIFY:['強化','bf'],SMOKE:['妨害','jm']};
 function mgCompute(kind,key){
   const save=S;const map=[...Array(N)].map(()=>Array(N).fill(0));
   let wall=null,enemy=null;
@@ -3794,7 +3884,7 @@ const KANA={ASSAULT:'アサルト',HEAVY:'ヘビー',GHOST:'ゴースト',ENGINE
   'PILE BNKR':'パイルバンカー','VORTEX DASH':'ボルテックスダッシュ','BLOOD SCY':'ブラッドサイス','RESONANCE':'レゾナンス','IMP KNUCKLE':'インパクトナックル',
   'SCATTER GUN':'スキャッターガン','INFERNO':'インフェルノ','SHOCK ROD':'ショックロッド','ARC MORTAR':'アークモーター',
   BLINK:'ブリンク',REWIND:'リワインド',SHIELD:'シールド',REPAIR:'リペア',JAMMER:'ジャマー',HOOK:'フック',CHARGE:'チャージ','X-RAY':'エックスレイ',
-  'WALL GEN':'ウォールジェン',SWAP:'スワップ',SILENCE:'サイレンス',MINE:'マイン',REFLECT:'リフレクト',ANCHOR:'アンカー',OVERCLOCK:'オーバークロック',
+  'WALL GEN':'ウォールジェン',SWAP:'スワップ',SILENCE:'サイレンス',MINE:'マイン',REFLECT:'リフレクト',ANCHOR:'アンカー',OVERCLOCK:'オーバークロック',BACKSTEP:'バックステップ',PARRY:'パリィ',FORTIFY:'フォーティファイ',SMOKE:'スモーク',
   'COUNTER RUSH':'カウンターラッシュ',OVERDRIVE:'オーバードライブ','IRON WALL':'アイアンウォール','GIGA CANNON':'ギガキャノン',
   'PHANTOM MIRAGE':'ファントムミラージュ','STATIC HAUNT':'スタティックホーント','SYSTEM HACK':'システムハック','ORBITAL STRIKE':'オービタルストライク',
   COUNTER:'カウンター',MIRAGE:'ミラージュ',HAUNT:'ホーント',HACK:'ハック',ORBITAL:'オービタル',
@@ -3895,6 +3985,20 @@ function wire(){
   board.addEventListener('pointerdown',e=>{e.preventDefault();const c=cellFromEvent(e);if(c)onBoardTap(c,e.pointerType!=='mouse');});
   $('bMove').onclick=()=>enterMode('move');$('bAtk').onclick=()=>enterMode('atk');
   $('bSk0').onclick=()=>enterMode('sk0');$('bSk1').onclick=()=>enterMode('sk1');$('bUlt').onclick=()=>enterMode('ult');
+  /* open-only information: folds remember their state per viewer */
+  const prefs=store('folds')||{};const savePrefs=()=>store('folds',prefs);
+  const DEF={preset:true,legend:true,log:window.innerWidth<940,keys:true};
+  document.querySelectorAll('.sect[data-fold]').forEach(sec=>{const k=sec.dataset.fold,h=sec.querySelector('h3.fold'),fi=h.querySelector('.fi');
+    const set=f=>{sec.classList.toggle('folded',f);fi.textContent=f?'▸':'▾';};set(prefs[k]??DEF[k]);
+    h.onclick=()=>{const f=!sec.classList.contains('folded');set(f);prefs[k]=f;savePrefs();};});
+  document.querySelectorAll('.dtg').forEach(b=>{const el=$(b.dataset.for),k='desc_'+b.dataset.for;
+    const set=on=>{el.classList.toggle('showdesc',on);b.textContent=on?'説明を隠す ▴':'説明を表示 ▾';};set(!!prefs[k]);
+    b.onclick=e=>{e.stopPropagation();const on=!el.classList.contains('showdesc');set(on);prefs[k]=on;savePrefs();};});
+  const foldPanel=(panel,head,k)=>{const fi=head.querySelector('.fi');const set=f=>{panel.classList.toggle('folded',f);fi.textContent=f?'▸':'▾';if(!f&&$('log'))$('log').scrollTop=$('log').scrollHeight;};
+    set(prefs[k]??DEF[k]);head.onclick=()=>{const f=!panel.classList.contains('folded');set(f);prefs[k]=f;savePrefs();};};
+  foldPanel($('logPanel'),$('logHead'),'log');foldPanel($('keysPanel'),$('keysHead'),'keys');
+  document.querySelectorAll('#hud .hp').forEach(el=>el.addEventListener('click',()=>{$('hud').classList.toggle('detail');layout();}));
+  $('pvTg').onclick=()=>{const bx=document.querySelector('.pvbox');const on=!bx.classList.contains('open');bx.classList.toggle('open',on);$('pvTg').textContent=on?'詳細を隠す ▴':'詳細を表示 ▾';};
   UI.threat=store('threat')!==false;$('bThreat').classList.toggle('on',UI.threat);
   $('bThreat').onclick=()=>{UI.threat=!UI.threat;store('threat',UI.threat);$('bThreat').classList.toggle('on',UI.threat);toast(UI.threat?'危険範囲を表示':'危険範囲を非表示');};
   document.querySelectorAll('#cpuLvl button').forEach(b=>b.onclick=()=>{store('cpu',b.dataset.l);syncCpuLevel();});syncCpuLevel();
