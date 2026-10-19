@@ -266,6 +266,12 @@ button:disabled{cursor:not-allowed}
 #hint{display:block;padding:5px 10px 4px 12px;font:400 16px/1.15 var(--fv);letter-spacing:.04em;color:#dff6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,rgba(0,240,255,.08),transparent);pointer-events:none;border-top:1px solid rgba(0,240,255,.25)}
 #hint b{color:var(--y);font-weight:400}
+/* katakana reading above English names */
+ruby{ruby-position:over;ruby-align:center}
+rt{font:400 9px/1.1 var(--fj);letter-spacing:.04em;color:#8ea6cc;text-transform:none;text-shadow:none}
+.ci-name rt{font-size:13px;color:#e8f6ff;letter-spacing:.2em}
+#ctrl .btn .bt rt{font-size:8px}
+#ctrl .btn .bt{line-height:1.25}
 /* number colours: damage · HP/heal/defence · cells · BIT · turns · me · rival */
 :root{--n-dmg:#ff5f45;--n-hp:#3dffa0;--n-cell:#4fa3ff;--n-bit:#ffe14d;--n-turn:#c77dff;--n-me:#00f0ff;--n-op:#ff2a8a;--n-wall:#8fb0ff}
 .n{font-weight:700;white-space:nowrap}
@@ -1764,7 +1770,7 @@ function cutinShow(cls,cc,frame,weapon,side,sub,name,note,ms){
   const el=$('cutin');if(!el)return;
   el.className='';void el.offsetWidth;
   el.style.setProperty('--cc',cc);el.style.setProperty('--cd',Math.round(ms/SPEED)+'ms');
-  $('ciSub').textContent=sub;$('ciName').textContent=name;$('ciNote').textContent=note||'';
+  $('ciSub').textContent=sub;$('ciName').innerHTML=rb(name);$('ciNote').textContent=note||'';
   const cv=$('ciCv'),g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
   try{drawMechFit(g,frame,weapon,PAL[side][frame],12,12,276,276,side?-1:1,now(),{});}catch(e){}
   el.className='show'+(cls?' '+cls:'');
@@ -3072,10 +3078,10 @@ function updateHpBars(){
 function refreshHUD(){
   if(!S||!S.units[0]||!S.units[1])return;
   const u0=S.units[0],u1=S.units[1];
-  $('h0n').textContent=u0.mech||u0.frame;$('h1n').textContent=u1.mech||u1.frame;
+  $('h0n').innerHTML=u0.mech?esc(u0.mech):rb(u0.frame);$('h1n').innerHTML=u1.mech?esc(u1.mech):rb(u1.frame);
   $('h1call').textContent=u1.name+(NET.on||UI.replay?'':' · CPU '+cpuLevel());
-  $('h0eq').innerHTML='<b>'+WEAPONS[u0.weapon].name+'</b> · '+u0.skills.map(s=>SKILLS[s.key].name).join(' / ');
-  $('h1eq').innerHTML='<b>'+WEAPONS[u1.weapon].name+'</b> · '+u1.skills.map(s=>u1.revealed.includes(s.key)?SKILLS[s.key].name:'???').join(' / ');
+  $('h0eq').innerHTML='<b>'+rb(WEAPONS[u0.weapon].name)+'</b> · '+u0.skills.map(s=>rb(SKILLS[s.key].name)).join(' / ');
+  $('h1eq').innerHTML='<b>'+rb(WEAPONS[u1.weapon].name)+'</b> · '+u1.skills.map(s=>u1.revealed.includes(s.key)?rb(SKILLS[s.key].name):'???').join(' / ');
   for(let s=0;s<2;s++){$('h'+s+'tg').innerHTML=tagsFor(S.units[s],s===0).map(([n,c])=>'<span class="tg '+c+'">'+n+'</span>').join('');}
   const sim=S.phase==='plan'?simPlan():{ap:0};
   for(let s=0;s<2;s++){const u=S.units[s],row=$('h'+s+'ur');if(!row)continue;const rdy=!u.ultUsed&&u.gauge>=GAUGE_MAX;
@@ -3142,19 +3148,19 @@ function refreshButtons(){
   if(!S)return;
   const u=S.units[0];const planning=S.phase==='plan'&&!UI.busy&&!S.over&&u.alive;const sim=planning?simPlan():{ap:0};const bud=planning?budget(u,sim):{ap:0,mv:0};const apLeft=bud.ap;
   const W=WEAPONS[u.weapon];
-  $('atkN').textContent=W.name;$('atkS').innerHTML='<span class="n bit">'+W.ap+'BIT</span> <span class="n dmg">'+(W.dmg||'—')+'DMG</span>';
+  $('atkN').innerHTML=rb(W.name);$('atkS').innerHTML='<span class="n bit">'+W.ap+'BIT</span> <span class="n dmg">'+(W.dmg||'—')+'DMG</span>';
   const mvLeft=bud.mv;$('bMove').disabled=!planning||apLeft<1||mvLeft<1;$('bMoveS').innerHTML='残り<span class="n cell">'+Math.max(0,Math.min(mvLeft,apLeft))+'マス</span>';$('bAtk').disabled=!planning||apLeft<W.ap;
   for(let i=0;i<2;i++){
     const b=$('bSk'+i),sk=u.skills[i];
     if(!sk){b.style.display='none';continue;}b.style.display='';
-    const d=SKILLS[sk.key];$('sk'+i+'N').textContent=d.name;
+    const d=SKILLS[sk.key];$('sk'+i+'N').innerHTML=rb(d.name);
     const st=skillState(i);
     $('sk'+i+'S').textContent=st.ok?((d.ap?d.ap+'BIT ':'')+(SKILL_CAT[sk.key]||['自分'])[0]):(st.why==='CD'?'CD中':st.why);
     b.disabled=!planning||!st.ok;
     const cv=$('sk'+i+'C');if(sk.cd>0){cv.classList.add('show');cv.innerHTML=sk.cd+'<small>TURN</small>';}else cv.classList.remove('show');
   }
   {const us=ultState(),b=$('bUlt'),rdy=!u.ultUsed&&u.gauge>=GAUGE_MAX;
-    $('ultN').textContent='★ '+ULT_SHORT[u.ult];$('ultS').textContent=u.ultUsed?'USED':rdy?(us.ok?'READY!':us.why):'GAUGE '+u.gauge+'%';
+    $('ultN').innerHTML='★ '+rb(ULT_SHORT[u.ult]);$('ultS').textContent=u.ultUsed?'USED':rdy?(us.ok?'READY!':us.why):'GAUGE '+u.gauge+'%';
     b.style.setProperty('--g',(u.ultUsed?0:clamp(u.gauge/GAUGE_MAX,0,1)*100)+'%');b.disabled=!planning||!us.ok;b.classList.toggle('ready',rdy);b.classList.toggle('on',UI.mode==='ult');}
   if(u.skills.length<2){$('ctrl').style.gridTemplateColumns='repeat(4,1fr)';$('bExec').style.gridColumn='span 2';}
   $('bUndo').disabled=!planning||!UI.plan.length;$('bReset').disabled=!planning||(!UI.plan.length&&!UI.mode);$('bExec').disabled=!planning;
@@ -3782,6 +3788,18 @@ function fmtNode(root,kind){
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(w.nextNode())nodes.push(w.currentNode);
   for(const t of nodes){if(!/\d|相手|自分/.test(t.nodeValue))continue;const span=document.createElement('span');span.innerHTML=fmtNums(t.nodeValue,kind);t.replaceWith(...span.childNodes);}
 }
+/* katakana readings for every English name in the game */
+const KANA={ASSAULT:'アサルト',HEAVY:'ヘビー',GHOST:'ゴースト',ENGINEER:'エンジニア',
+  'NEON BLADE':'ネオンブレード','TWIN TRIG':'ツイントリガー','BOLT RIFLE':'ボルトライフル','VOID SPIKE':'ヴォイドスパイク','CLUSTER B.':'クラスターボム',
+  'PILE BNKR':'パイルバンカー','VORTEX DASH':'ボルテックスダッシュ','BLOOD SCY':'ブラッドサイス','RESONANCE':'レゾナンス','IMP KNUCKLE':'インパクトナックル',
+  'SCATTER GUN':'スキャッターガン','INFERNO':'インフェルノ','SHOCK ROD':'ショックロッド','ARC MORTAR':'アークモーター',
+  BLINK:'ブリンク',REWIND:'リワインド',SHIELD:'シールド',REPAIR:'リペア',JAMMER:'ジャマー',HOOK:'フック',CHARGE:'チャージ','X-RAY':'エックスレイ',
+  'WALL GEN':'ウォールジェン',SWAP:'スワップ',SILENCE:'サイレンス',MINE:'マイン',REFLECT:'リフレクト',ANCHOR:'アンカー',OVERCLOCK:'オーバークロック',
+  'COUNTER RUSH':'カウンターラッシュ',OVERDRIVE:'オーバードライブ','IRON WALL':'アイアンウォール','GIGA CANNON':'ギガキャノン',
+  'PHANTOM MIRAGE':'ファントムミラージュ','STATIC HAUNT':'スタティックホーント','SYSTEM HACK':'システムハック','ORBITAL STRIKE':'オービタルストライク',
+  COUNTER:'カウンター',MIRAGE:'ミラージュ',HAUNT:'ホーント',HACK:'ハック',ORBITAL:'オービタル',
+  DEFENSE:'ディフェンス',OFFENSE:'オフェンス',ADRENALINE:'アドレナリン',GUTS:'ガッツ',MOMENTUM:'モメンタム','QUICK LOAD':'クイックロード'};
+function rb(name){const k=KANA[name];return k?'<ruby>'+esc(name)+'<rt>'+k+'</rt></ruby>':esc(name);}
 const STARTERS=[
   {label:'近づいて斬る',  tip:'迷ったらこれ。BLINKで間合いを詰めて薙ぎ払う',frame:'ASSAULT', weapon:'NEON_BLADE',skills:['BLINK','SHIELD'], ult:'COUNTER_RUSH'},
   {label:'どっしり殴る',  tip:'硬さで受けて、杭で壁に叩きつける',          frame:'HEAVY',   weapon:'PILE_BNKR', skills:['ANCHOR','REPAIR'],ult:'IRON_WALL'},
@@ -3791,7 +3809,7 @@ const STARTERS=[
 function buildStarters(){
   const el=$('cStarters');if(!el)return;el.innerHTML='';
   for(const st of STARTERS){const b=document.createElement('button');b.className='starter';
-    b.innerHTML='<b>'+st.frame+' · '+st.label+'</b>'+WEAPONS[st.weapon].name+' / '+st.skills.map(k=>SKILLS[k].name).join('+')+'<small>'+fmtNums(st.tip,'fr')+'</small>';
+    b.innerHTML='<b>'+rb(st.frame)+' · '+st.label+'</b>'+rb(WEAPONS[st.weapon].name)+' / '+st.skills.map(k=>rb(SKILLS[k].name)).join('+')+'<small>'+fmtNums(st.tip,'fr')+'</small>';
     b.onclick=()=>{CFG={frame:st.frame,weapon:st.weapon,skills:st.skills.slice(),ult:st.ult,mech:CFG.mech||''};PS_ON=-1;refreshSetup();renderPresets();toast(st.label+' — 構成をセット');};
     el.appendChild(b);}
 }
@@ -3800,20 +3818,20 @@ function buildSetup(){
   const fEl=$('cFrames');fEl.innerHTML='';
   for(const [k,f] of Object.entries(FRAMES)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><canvas width="184" height="184"></canvas><span class="cn">'+f.name+' <small style="color:var(--dim);font-weight:500">'+FRAME_ART[k].alias+'</small></span><span class="fst"><em>HP</em><span class="fb"><i style="width:'+Math.round(f.hp/200*100)+'%"></i></span><b class="hpv">'+f.hp+'</b></span><span class="fst"><em>MOVE</em><span class="fp">'+Array.from({length:8},(_,i)=>'<i'+(i<f.mv?' class="on"':'')+'></i>').join('')+'</span><b class="mvv">'+(f.mv>=8?'∞':f.mv)+'</b></span><span class="cp">['+f.passive+'] '+fmtNums(f.pdesc,'fr')+'</span></span>';
+    b.innerHTML='<span class="in"><canvas width="184" height="184"></canvas><span class="cn">'+rb(f.name)+' <small style="color:var(--dim);font-weight:500">'+FRAME_ART[k].alias+'</small></span><span class="fst"><em>HP</em><span class="fb"><i style="width:'+Math.round(f.hp/200*100)+'%"></i></span><b class="hpv">'+f.hp+'</b></span><span class="fst"><em>MOVE</em><span class="fp">'+Array.from({length:8},(_,i)=>'<i'+(i<f.mv?' class="on"':'')+'></i>').join('')+'</span><b class="mvv">'+(f.mv>=8?'∞':f.mv)+'</b></span><span class="cp">['+rb(f.passive)+'] '+fmtNums(f.pdesc,'fr')+'</span></span>';
     b.onclick=()=>{CFG.frame=k;refreshSetup();};fEl.appendChild(b);
   }
   const wEl=$('cWeapons');wEl.innerHTML='';
   for(const [k,w] of Object.entries(WEAPONS)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn">'+w.name+'</span><span class="cm">'+fmtStat([['BIT',w.ap,'bit'],['DMG',w.dmg,'dmg'],['RNG',(w.range>=99?'∞':w.range),'cell']])+'</span><span class="cp">'+fmtNums(w.desc,'atk')+'</span><span class="rt">'+w.rtag+'</span></span>';
+    b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn">'+rb(w.name)+'</span><span class="cm">'+fmtStat([['BIT',w.ap,'bit'],['DMG',w.dmg,'dmg'],['RNG',(w.range>=99?'∞':w.range),'cell']])+'</span><span class="cp">'+fmtNums(w.desc,'atk')+'</span><span class="rt">'+w.rtag+'</span></span>';
     b.onclick=()=>{CFG.weapon=k;refreshSetup();};wEl.appendChild(b);drawMini(b.querySelector('canvas.mg'),'atk',k,w.color);
   }
   const sEl=$('cSkills');sEl.innerHTML='';
   for(const [k,s] of Object.entries(SKILLS)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
     const cat=SKILL_CAT[k]||['自分','self'];
-    b.innerHTML='<span class="in"><span class="ord"></span>'+(s.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn">'+s.name+'<span class="ctag '+cat[1]+'">'+cat[0]+'</span></span><span class="cm">'+fmtStat([['CD',s.cd,'turn']].concat(s.ap?[['BIT',s.ap,'bit']]:[],s.range?[['RNG',s.range,'cell']]:[]))+'</span><span class="cp">'+fmtNums(s.desc,'sk')+'</span></span>';
+    b.innerHTML='<span class="in"><span class="ord"></span>'+(s.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn">'+rb(s.name)+'<span class="ctag '+cat[1]+'">'+cat[0]+'</span></span><span class="cm">'+fmtStat([['CD',s.cd,'turn']].concat(s.ap?[['BIT',s.ap,'bit']]:[],s.range?[['RNG',s.range,'cell']]:[]))+'</span><span class="cp">'+fmtNums(s.desc,'sk')+'</span></span>';
     b.onclick=()=>{const i=CFG.skills.indexOf(k);if(i>=0){if(CFG.skills.length>1)CFG.skills.splice(i,1);}else{if(CFG.skills.length>=2)CFG.skills[1]=k;else CFG.skills.push(k);}refreshSetup();};
     sEl.appendChild(b);if(s.tgt!=='none')drawMini(b.querySelector('canvas.mg'),'sk',k,'#2dffa8');
   }
@@ -3830,16 +3848,16 @@ function refreshSetup(){
   document.querySelectorAll('#cSkills .card').forEach(b=>{const i=CFG.skills.indexOf(b.dataset.k);b.classList.toggle('sel',i>=0);const o=b.querySelector('.ord');if(o)o.textContent=i>=0?String(i+1):'';});
   if(!ULTS[CFG.ult]||ULTS[CFG.ult].frame!==CFG.frame)CFG.ult=ULT_OF(CFG.frame)[0];
   {const uEl=$('cUlts');if(uEl){uEl.innerHTML='';for(const k of ULT_OF(CFG.frame)){const d=ULTS[k];const b=document.createElement('button');b.className='card'+(k===CFG.ult?' sel':'');b.dataset.k=k;
-    b.innerHTML='<span class="in">'+(d.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn" style="color:#ffd23a">★ '+d.name+'</span><span class="cm" style="color:'+(d.role==='DEFENSE'?'var(--g)':'var(--n-dmg)')+'">'+d.role+'</span><span class="cp">'+fmtNums(d.desc,'ult')+'</span></span>';
+    b.innerHTML='<span class="in">'+(d.tgt!=='none'?'<canvas class="mg" width="140" height="140"></canvas>':'')+'<span class="cn" style="color:#ffd23a">★ '+rb(d.name)+'</span><span class="cm" style="color:'+(d.role==='DEFENSE'?'var(--g)':'var(--n-dmg)')+'">'+rb(d.role)+'</span><span class="cp">'+fmtNums(d.desc,'ult')+'</span></span>';
     b.onclick=()=>{CFG.ult=k;refreshSetup();};uEl.appendChild(b);if(d.tgt!=='none')drawMini(b.querySelector('canvas.mg'),'ult',k,ULT_COLOR);}}}
   const f=FRAMES[CFG.frame],w=WEAPONS[CFG.weapon];
-  $('pvName').textContent=(ED.pro&&CFG.mech)?CFG.mech:f.name;$('pvRole').textContent=(ED.pro&&CFG.mech?f.name+' · ':'')+f.role;
+  $('pvName').innerHTML=(ED.pro&&CFG.mech)?esc(CFG.mech):rb(f.name);$('pvRole').textContent=(ED.pro&&CFG.mech?f.name+' · ':'')+f.role;
   $('pvHp').style.width=(f.hp/200*100)+'%';$('pvHpN').textContent=f.hp;
   $('pvAp').style.width=(f.mv/8*100)+'%';$('pvApN').textContent=f.mv>=8?'∞':f.mv;
   $('pvDmg').style.width=(Math.max(8,w.dmg)/50*100)+'%';$('pvDmgN').textContent=w.dmg;
-  $('pvPas').innerHTML='<b>['+f.passive+']</b><br>'+fmtNums(f.pdesc,'fr');
-  $('pvW').textContent=w.name+' — '+w.rtag;drawMini($('pvMg'),'atk',CFG.weapon,w.color);
-  $('pvS0').textContent=CFG.skills[0]?SKILLS[CFG.skills[0]].name:'—';$('pvS1').textContent=CFG.skills[1]?SKILLS[CFG.skills[1]].name:'—';$('pvU').textContent='★ '+ULTS[CFG.ult].name;
+  $('pvPas').innerHTML='<b>['+rb(f.passive)+']</b><br>'+fmtNums(f.pdesc,'fr');
+  $('pvW').innerHTML=rb(w.name)+' — '+esc(w.rtag);drawMini($('pvMg'),'atk',CFG.weapon,w.color);
+  $('pvS0').innerHTML=CFG.skills[0]?rb(SKILLS[CFG.skills[0]].name):'—';$('pvS1').innerHTML=CFG.skills[1]?rb(SKILLS[CFG.skills[1]].name):'—';$('pvU').innerHTML='★ '+rb(ULTS[CFG.ult].name);
   $('bStart').disabled=CFG.skills.length<1;
   drawFrameThumbs();
 }
