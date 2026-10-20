@@ -266,6 +266,11 @@ button:disabled{cursor:not-allowed}
 #hint{display:block;padding:5px 10px 4px 12px;font:400 16px/1.15 var(--fv);letter-spacing:.04em;color:#dff6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,rgba(0,240,255,.08),transparent);pointer-events:none;border-top:1px solid rgba(0,240,255,.25)}
 #hint b{color:var(--y);font-weight:400}
+/* last-5-seconds countdown over the board */
+#cdown{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;opacity:0;font:900 clamp(64px,22vw,150px)/1 Orbitron,var(--fv),sans-serif;color:#ff3d7a;text-shadow:0 0 18px rgba(255,42,138,.85),0 0 46px rgba(255,42,138,.45),0 4px 0 #3a0018;-webkit-text-stroke:2px rgba(255,255,255,.55);transition:opacity .15s}
+#cdown.on{opacity:.82}
+#cdown.pop{animation:cdpop .9s ease-out}
+@keyframes cdpop{0%{transform:translate(-50%,-50%) scale(1.5);opacity:1}25%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(.92);opacity:.55}}
 /* ── borders only where they carry meaning: selected, active mode, primary action ── */
 .btn:not(.b-exec):not(.on):not(.keep){--bc:transparent}
 .b-cyan>.in{background:linear-gradient(180deg,rgba(0,240,255,.13),rgba(0,240,255,.04)),linear-gradient(180deg,var(--panel2),var(--panel))}
@@ -563,7 +568,7 @@ header.title{position:relative}
       </div>
       <div class="plate" id="bwrap"><div class="in">
         <canvas id="board"></canvas>
-        <div id="hint"></div><i id="tbar"></i>
+        <div id="hint"></div><i id="tbar"></i><div id="cdown"></div>
         <div id="toast"></div>
       </div></div>
       <div class="plate" id="qbar"><div class="in">
@@ -684,8 +689,8 @@ header.title{position:relative}
     <ul>
       <li><b>PLAN</b>：制限時間<b>20秒</b>。毎ターン全員<b>8BIT</b>（行動エネルギー）を使って行動を予約。移動は1マス1BITで、フレームごとに<b>1ターンの移動上限</b>がある（ASSAULT 5／HEAVY 3／ENGINEER 4／GHOST なし）。相手も裏で同時に予約している。半透明のゴーストが予約後の位置。</li>
       <li><b>EXECUTE</b>：両者の予約を先頭から1ステップずつ同時に解決。各ステップは<b>移動→攻撃・スキル</b>の順。</li>
-      <li><b>全ステップ後</b>：ARC MORTAR着弾、炎の上にいる機体に延焼ダメージ。</li>
-      <li><b>ターン終了</b>：BIT回復、スキルCD減少、VOID SPIKE発動など。</li>
+      <li><b>全ステップ後</b>：MORTAR着弾、炎の上にいる機体に延焼ダメージ。</li>
+      <li><b>ターン終了</b>：BIT回復、スキルCD減少、SPIKE起爆など。残り5秒からは盤面に大きくカウントダウン。</li>
     </ul>
     <h4>読み合いのヒント</h4>
     <ul>
@@ -698,31 +703,31 @@ header.title{position:relative}
       <li>フレームごとに2種類から1つを選ぶ。<b>何を選んだかは相手に見えない</b>（使った瞬間に公開）。</li>
       <li>ゲージは毎ターン溜まり、<b>だいたい6ターン目</b>に満タン。<b>被ダメージが多いほど早く</b>溜まる。満タンかどうかはお互いに見える。<b>1試合1回</b>。</li>
       <li>予約はBIT消費0の1手。<b>U</b>キーか ULT ボタン。</li>
-      <li>ASSAULT：COUNTER RUSH（受けたダメージ×2を返す）／OVERDRIVE（BIT+4・移動+3、次ターンBIT5）</li>
-      <li>HEAVY：IRON WALL（ダメージを全部跳ね返す）／GIGA CANNON（縦横一列60、2ターン移動不可）</li>
-      <li>GHOST：PHANTOM MIRAGE（分身に紛れ、次ターンに出現して1.5倍）／STATIC HAUNT（その場に留まると40）</li>
-      <li>ENGINEER：SYSTEM HACK（相手の予約を見てから組み直す）／ORBITAL STRIKE（次ターン終わりに3×3へ70）</li>
+      <li>ASSAULT：COUNTER（受けたダメージ×2を返す・上限なし）／OVERDRIVE（BIT+4・移動+3、次ターンBIT5）</li>
+      <li>HEAVY：IRON WALL（ダメージを全部跳ね返す）／CANNON（縦横一列60、撃ったターンは移動不可）</li>
+      <li>GHOST：MIRAGE（分身を残して姿を消す。分身は0BITで動かせ、隠れたままの攻撃は×2）／HUNT（その場に留まると80）</li>
+      <li>ENGINEER：HACK（相手の予約を見てから組み直す）／STRIKE（次ターン終わりに5×5へ60）</li>
     </ul>
     <h4>照準と射程</h4>
     <ul>
       <li>攻撃の向きは<b>8方向</b>。攻撃先は予約時の位置からの<b>相対位置</b>として記録され、実行時の現在地に適用される。</li>
-      <li>壁のマスは選べない。<b>BOLT RIFLE / RESONANCE</b>（と X-RAY中の射撃）は壁越しに狙え、直線上のすべてに当たる。</li>
-      <li>投擲（VOID SPIKE / CLUSTER B. / ARC MORTAR）のみ<b>ひし形</b>の射程。ARC MORTARは2マス以上先から。</li>
-      <li>「射撃」タグの武器は <b>REFLECT</b> で跳ね返される。</li>
+      <li>壁のマスは選べない。<b>RIFLE / RESONANCE</b>（と X-RAY中の攻撃）は壁越しに狙え、直線上のすべてに当たる。</li>
+      <li>投擲・曲射は<b>ひし形</b>の射程。<b>CLUSTER</b>＝即着弾の十字／<b>SPIKE</b>＝次ターン開始に3×3／<b>HOWITZER</b>＝次の手の後に3マス列（3マス以上先）／<b>MORTAR</b>＝ターン終了時に3×3（2マス以上先）。</li>
+      <li><b>REFLECT</b> は最初の攻撃を半分にして、残り半分を跳ね返す。「射撃」タグの武器は <b>SMOKE</b> の煙で防がれる。</li>
       <li><b>MINE</b> は相手から見えない。踏んだ瞬間に爆発する。</li>
       <li>スマホは<b>1回目のタップで照準プレビュー、2回目で確定</b>。</li>
     </ul>
     <h4>オンライン対戦</h4>
     <ul>
       <li><b>ONLINE ⇄</b> → CREATE ROOM でコード発行、相手は JOIN でコード入力（招待リンクも可）。</li>
-      <li>1ターン<b>60秒</b>。時間切れで予約済みの行動をそのまま実行。互いの予約は両者がロックするまで見えない。</li>
+      <li>1ターン<b>20秒</b>。時間切れで予約済みの行動をそのまま実行。互いの予約は両者がロックするまで見えない。</li>
     </ul>
     <h4>衝突</h4>
     <ul>
       <li>相手がいるマスへの移動は失敗（ダメージなし）。</li>
       <li>同じマスへ同時に移動（またはすれ違い）すると<b>正面衝突</b>：両者10ダメージ＋スタン。</li>
-      <li>スタンするとそのターンの残り行動はキャンセル（SHOCK ROD・壁激突・正面衝突）。ANCHOR中は無効。</li>
-      <li>VORTEX DASH は衝突優先権を持ち、相手を弾き飛ばして移動を完了する。</li>
+      <li>スタンするとそのターンの残り行動はキャンセル（ROD・壁激突・正面衝突・PARRY）。ANCHOR中は無効。</li>
+      <li>DASH は衝突優先権を持ち、相手を弾き飛ばして移動を完了する。</li>
     </ul>
     <div class="x"><button class="btn b-cyan" id="bHelpClose"><span class="in"><span class="bt">CLOSE</span></span></button></div>
   </div></div>
@@ -768,66 +773,68 @@ const FRAMES={
   GHOST:   {name:'GHOST',   hp:135,ap:8,mv:8,passive:'MOMENTUM',  pdesc:'そのターンの移動1マスごとに攻撃ダメ+4（最大+16）',role:'高機動ストライカー'},
   ENGINEER:{name:'ENGINEER',hp:165, ap:8,mv:4,passive:'QUICK LOAD',pdesc:'ターン終了時のスキルCD解消が2倍(-2)',role:'スキル特化サポート'},
 };
-/* tgt: adj=8 adjacent · line=8-dir line stopped by walls (X-RAY → ray) · lineS=same, never pierces · ray=8-dir line through walls · throw=diamond · lob=diamond, min 2 · dash=line */
+/* tgt: adj=8 adjacent · line/lineS=8-dir line stopped by walls (X-RAY → ray) · ray=8-dir line through walls · throw=diamond · lob=diamond, min 2 · lob3=diamond, min 3 · dash=line */
 const WEAPONS={
-  NEON_BLADE: {name:'NEON BLADE', ap:3,dmg:30,range:1, kind:'sweep',arc:1,tgt:'adj',  color:'#00f0ff',rtag:'近接・前方3マス', desc:'前方横3マスをまとめて薙ぎ払う。扱いやすい近接の基本形'},
-  TWIN_TRIG:  {name:'TWIN TRIG',  ap:2,dmg:20,range:3, kind:'shot',       tgt:'line', color:'#ffe14d',rtag:'直線3・射撃',   desc:'低コストの牽制射撃。最初に当たった相手に命中',ranged:true},
-  BOLT_RIFLE: {name:'BOLT RIFLE', ap:5,dmg:34,range:99,kind:'beam',       tgt:'ray',  color:'#ff9a2a',rtag:'直線∞・壁貫通・射撃',  desc:'壁も機体も貫く狙撃ビーム。直線上すべてに命中',ranged:true},
-  VOID_SPIKE: {name:'VOID SPIKE', ap:3,dmg:40,range:4, kind:'spike',      tgt:'throw',color:'#b04dff',rtag:'投擲4・ひし形',  desc:'設置→次ターン開始時に3×3へ40→以後2ターン、踏むと14'},
-  CLUSTER_B:  {name:'CLUSTER B.', ap:3,dmg:30,range:4, kind:'cluster',    tgt:'throw',color:'#ff5a1f',rtag:'投擲4・ひし形',  desc:'着弾マスに30→次のアクション後、周囲8マスへ22の拡散爆発'},
-  PILE_BNKR:  {name:'PILE BNKR',  ap:4,dmg:32,range:1, kind:'pile',       tgt:'adj',  color:'#e6f0ff',rtag:'近接1・8方向',   desc:'2マス吹き飛ばす。壁に激突で+15＆スタン'},
-  VORTEX_DASH:{name:'VORTEX DASH',ap:5,dmg:22,range:3, kind:'dash',       tgt:'dash', color:'#2dffd0',rtag:'突進3・8方向',   desc:'突進攻撃。衝突優先権で相手を弾き飛ばして移動完了'},
-  BLOOD_SCY:  {name:'BLOOD SCY',  ap:4,dmg:26,range:1, kind:'sweep',arc:2,tgt:'adj',  color:'#ff2a5a',rtag:'近接・前方半円5', desc:'前方半円5マス。与えたダメージの40%を回復'},
-  RESONANCE:  {name:'RESONANCE',  ap:4,dmg:18,range:99,kind:'reso',       tgt:'ray',  color:'#c77dff',rtag:'直線∞・壁透過・射撃',  desc:'壁を透過する共振波。壁に隣接する相手には32',ranged:true},
-  IMP_KNUCKLE:{name:'IMP KNUCKLE',ap:3,dmg:22,range:2, kind:'knuckle',    tgt:'line', color:'#7ab8ff',rtag:'直線2・8方向',   desc:'射程2の突き。命中した相手を1マス後退させる'},
-  SCATTER:    {name:'SCATTER GUN',ap:3,dmg:32,range:2, kind:'scatter',    tgt:'adj',  color:'#b6ff3a',rtag:'近距離・扇状・射撃', desc:'前方1マスに32、その先の扇状3マスに20',ranged:true},
+  NEON_BLADE: {name:'BLADE', ap:3,dmg:30,range:1, kind:'sweep',arc:1,tgt:'adj',  color:'#00f0ff',rtag:'近接・前方3マス', desc:'前方横3マスをまとめて薙ぎ払う。扱いやすい近接の基本形'},
+  TWIN_TRIG:  {name:'TRIG',  ap:2,dmg:20,range:3, kind:'shot',       tgt:'line', color:'#ffe14d',rtag:'直線3・射撃',   desc:'低コストの牽制射撃。最初に当たった相手に命中',ranged:true},
+  BOLT_RIFLE: {name:'RIFLE', ap:5,dmg:34,range:99,kind:'beam',       tgt:'ray',  color:'#ff9a2a',rtag:'直線∞・壁貫通・射撃',  desc:'壁も機体も貫く狙撃ビーム。直線上すべてに命中',ranged:true},
+  VOID_SPIKE: {name:'SPIKE', ap:3,dmg:40,range:4, kind:'spike',      tgt:'throw',color:'#b04dff',rtag:'投擲4・ひし形',  desc:'設置→次ターン開始時に3×3へ40→以後2ターン、踏むと14'},
+  CLUSTER_B:  {name:'CLUSTER', ap:3,dmg:26,range:3, kind:'cluster',    tgt:'throw',color:'#ff5a1f',rtag:'投擲3・十字・即着弾',  desc:'その手のうちに着弾する唯一の投擲。中心26＋上下左右4マスに20'},
+  PILE_BNKR:  {name:'BNKR',  ap:4,dmg:32,range:1, kind:'pile',       tgt:'adj',  color:'#e6f0ff',rtag:'近接1・8方向',   desc:'2マス吹き飛ばす。壁に激突で+15＆スタン'},
+  VORTEX_DASH:{name:'DASH',ap:5,dmg:22,range:3, kind:'dash',       tgt:'dash', color:'#2dffd0',rtag:'突進3・8方向',   desc:'突進攻撃。衝突優先権で相手を弾き飛ばして移動完了'},
+  BLOOD_SCY:  {name:'SCY',  ap:4,dmg:26,range:1, kind:'sweep',arc:2,tgt:'adj',  color:'#ff2a5a',rtag:'近接・前方半円5', desc:'前方半円5マス。与えたダメージの40%を回復'},
+  RESONANCE:  {name:'RESONANCE',  ap:2,dmg:18,range:99,kind:'reso',       tgt:'ray',  color:'#c77dff',rtag:'直線∞・壁透過・射撃',  desc:'壁を透過する共振波。壁に隣接する相手には倍の36',ranged:true},
+  IMP_KNUCKLE:{name:'KNUCKLE',ap:3,dmg:22,range:2, kind:'knuckle',    tgt:'line', color:'#7ab8ff',rtag:'直線2・8方向',   desc:'射程2の突き。命中した相手を1マス後退させる'},
+  SCATTER:    {name:'SCATTER',ap:3,dmg:32,range:2, kind:'scatter',    tgt:'adj',  color:'#b6ff3a',rtag:'近距離・扇状・射撃', desc:'前方1マスに32、その先の扇状3マスに20',ranged:true},
   INFERNO:    {name:'INFERNO',    ap:3,dmg:24,range:2, kind:'flame',      tgt:'lineS',color:'#ff5a1f',rtag:'直線2・延焼・射撃',   desc:'直線2マスを焼いて24。炎は次ターン終了まで残り、踏む/留まると8',ranged:true},
-  SHOCK_ROD:  {name:'SHOCK ROD',  ap:3,dmg:22,range:1, kind:'shock',      tgt:'adj',  color:'#fff35c',rtag:'近接1・スタン', desc:'隣接1マスに22＋スタン（相手の残り行動をすべてキャンセル）'},
-  ARC_MORTAR: {name:'ARC MORTAR', ap:3,dmg:34,range:5, kind:'mortar',     tgt:'lob',  color:'#ff6ad5',rtag:'曲射2〜5・遅延', desc:'壁越しに砲撃を予約。全行動の後に着弾：中心34／周囲8マス12'},
+  SHOCK_ROD:  {name:'ROD',  ap:3,dmg:22,range:1, kind:'shock',      tgt:'adj',  color:'#fff35c',rtag:'近接1・スタン', desc:'隣接1マスに22＋スタン（相手の残り行動をすべてキャンセル）'},
+  ARC_MORTAR: {name:'MORTAR', ap:3,dmg:34,range:5, kind:'mortar',     tgt:'lob',  color:'#ff6ad5',rtag:'曲射2〜5・ターン終了', desc:'壁越しに砲撃を予約。全行動の後に着弾：中心34／周囲8マス12。最後に立つ場所を読む'},
+  HOWITZER:   {name:'HOWITZER', ap:3,dmg:28,range:6, kind:'howitzer',   tgt:'lob3', color:'#ffb347',rtag:'曲射3〜6・1手後・列', desc:'遠くへ撃つ榴弾砲。次の手の後に着弾し、射線と直交する3マス一列に28。横へ逃げる相手を狩る'},
 };
 const SKILLS={
-  BLINK:   {name:'BLINK',   cd:2,tgt:'square',range:2,desc:'2マス以内（8方向）へ壁抜けテレポート'},
-  REWIND:  {name:'REWIND',  cd:4,tgt:'none',desc:'ターン開始時の位置へ戻る'},
-  SHIELD:  {name:'SHIELD',  cd:5,tgt:'none',desc:'次に受けるダメージを35軽減（2ターン持続）'},
-  REPAIR:  {name:'REPAIR',  cd:6,tgt:'none',desc:'HPを35回復'},
-  JAMMER:  {name:'JAMMER',  cd:4,tgt:'none',desc:'相手の次ターンのBITを-3'},
-  HOOK:    {name:'HOOK',    cd:4,tgt:'hook',desc:'8方向の直線上の相手を目の前へ引き寄せる'},
-  CHARGE:  {name:'CHARGE',  cd:5,ap:2,tgt:'none',desc:'2BIT消費。次ターンのBITを+4'},
-  X_RAY:   {name:'X-RAY',   cd:4,tgt:'none',desc:'このターン、自分の射撃が壁を貫通'},
-  WALL_GEN:{name:'WALL GEN',cd:5,tgt:'square',range:3,desc:'3マス以内に耐久50の壁を生成（消えない）'},
-  SWAP:    {name:'SWAP',    cd:6,tgt:'swap',range:5,desc:'5マス以内の相手と位置を入れ替える'},
-  SILENCE: {name:'SILENCE', cd:2,tgt:'none',desc:'相手のバフを解除し、次ターンはスキル封印＋BIT-2'},
-  MINE:    {name:'MINE',    cd:4,tgt:'square',range:2,desc:'2マス以内に見えない地雷を設置。相手が踏むと35（最大2個）'},
-  REFLECT: {name:'REFLECT', cd:5,tgt:'none',desc:'このターン最初に受ける射撃ダメージを無効化し、70%を相手へ跳ね返す'},
-  ANCHOR:  {name:'ANCHOR',  cd:4,tgt:'none',desc:'このターン、吹き飛ばし・引き寄せ・入替・スタン無効＆被ダメ-25%'},
-  OVERCLOCK:{name:'OVERCLOCK',cd:4,ap:0,tgt:'none',desc:'BIT消費なし。このターンの武器ダメージ+50%'},
-  BACKSTEP:{name:'BACKSTEP',cd:4,tgt:'none',desc:'このターン、攻撃が当たる瞬間に1マス下がって1回だけ自動で回避（下がれない時は被弾）'},
-  PARRY:   {name:'PARRY',   cd:5,tgt:'none',desc:'発動した手と次の手の間、最初に受ける近接攻撃を無効化して相手をスタン'},
-  FORTIFY: {name:'FORTIFY', cd:6,tgt:'none',desc:'動かない限り、受けるダメージ半分・与えるダメージ1.2倍。解除する1マス目の移動はBIT3倍'},
-  SMOKE:   {name:'SMOKE',   cd:5,tgt:'square',range:3,desc:'3マス以内に3×3の煙。次ターン終了まで、煙の中の機体には射撃が届かない'},
+  BLINK:   {name:'BLINK',   cd:2,ap:1,tgt:'square',range:2,desc:'2マス以内（8方向）へ壁抜けテレポート'},
+  REWIND:  {name:'REWIND',  cd:4,ap:1,tgt:'none',desc:'ターン開始時の位置へ戻る'},
+  SHIELD:  {name:'SHIELD',  cd:5,ap:1,tgt:'none',desc:'次に受けるダメージを35軽減（2ターン持続）'},
+  REPAIR:  {name:'REPAIR',  cd:6,ap:1,tgt:'none',desc:'HPを35回復'},
+  JAMMER:  {name:'JAMMER',  cd:4,ap:1,tgt:'none',desc:'相手の次ターンのBITを-3'},
+  HOOK:    {name:'HOOK',    cd:4,ap:1,tgt:'hook',desc:'8方向の直線上の相手を目の前へ引き寄せる'},
+  CHARGE:  {name:'CHARGE',  cd:5,ap:3,tgt:'none',desc:'次ターンのBITを+4'},
+  X_RAY:   {name:'X-RAY',   cd:4,ap:1,tgt:'none',desc:'このターン、自分の攻撃が壁を貫通'},
+  WALL_GEN:{name:'WALL GEN',cd:5,ap:1,tgt:'square',range:3,desc:'3マス以内に耐久30の壁を生成（壊されるまで消えない）'},
+  SWAP:    {name:'SWAP',    cd:6,ap:1,tgt:'swap',range:5,desc:'5マス以内の相手と位置を入れ替える'},
+  SILENCE: {name:'SILENCE', cd:4,ap:1,tgt:'none',desc:'相手のバフを解除し、次ターンはスキル封印＋BIT-2'},
+  MINE:    {name:'MINE',    cd:4,ap:1,tgt:'square',range:2,desc:'2マス以内に見えない地雷を設置。相手が踏むと20（最大2個）'},
+  REFLECT: {name:'REFLECT', cd:5,ap:1,tgt:'none',desc:'このターン最初に受ける攻撃を50%にし、残りの50%を相手へ跳ね返す'},
+  ANCHOR:  {name:'ANCHOR',  cd:4,ap:1,tgt:'none',desc:'このターン、吹き飛ばし・引き寄せ・入替・スタン無効＆被ダメ-25%'},
+  OVERCLOCK:{name:'OVERCLOCK',cd:5,ap:1,tgt:'none',desc:'このターンの武器ダメージ+50%'},
+  BACKSTEP:{name:'BACKSTEP',cd:4,ap:1,tgt:'none',desc:'このターン、攻撃が当たる瞬間に1マス下がって1回だけ自動で回避（下がれない時は被弾）'},
+  PARRY:   {name:'PARRY',   cd:5,ap:1,tgt:'none',desc:'発動した手と次の手の間、最初に受ける1マス以内からの攻撃を無効化して相手をスタン'},
+  FORTIFY: {name:'FORTIFY', cd:6,ap:1,tgt:'none',desc:'受けるダメージ半分・与えるダメージ1.2倍。その間は移動できず、解除にはBIT1の1手が必要'},
+  SMOKE:   {name:'SMOKE',   cd:5,ap:1,tgt:'square',range:3,desc:'3マス以内に3×3の煙。次ターン終了まで、煙の中の機体には射撃が届かない'},
 };
 /* ULTIMATES — 2 per frame, pick 1 (hidden from the rival until used). One use per match. */
 const ULTS={
-  COUNTER_RUSH:  {name:'COUNTER RUSH',  frame:'ASSAULT', tgt:'none',  role:'DEFENSE',desc:'このターンに受けたダメージの2倍（最大55）を、ターン終了時に相手へ叩き返す'},
+  COUNTER_RUSH:  {name:'COUNTER',  frame:'ASSAULT', tgt:'none',  role:'DEFENSE',desc:'このターンに受けたダメージの2倍（上限なし）を、ターン終了時に相手へ叩き返す'},
   OVERDRIVE:     {name:'OVERDRIVE',     frame:'ASSAULT', tgt:'none',  role:'OFFENSE',desc:'このターンBIT+4・移動上限+3。代わりに次のターンはBIT 5（オーバーヒート）'},
   IRON_WALL:     {name:'IRON WALL',     frame:'HEAVY',   tgt:'none',  role:'DEFENSE',desc:'発動からターン終了まで、相手のダメージをすべて無効化して同じ量を跳ね返す'},
-  GIGA_CANNON:   {name:'GIGA CANNON',   frame:'HEAVY',   tgt:'dir4',  role:'OFFENSE',desc:'縦か横の一列を壁ごと撃ち抜いて60ダメージ。撃ったターンと次のターンは移動できない'},
-  PHANTOM_MIRAGE:{name:'PHANTOM MIRAGE',frame:'GHOST',   tgt:'square',range:3,role:'DEFENSE',desc:'3マス以内へ消えて移動し、分身2体と並ぶ（このターンの行動はここまで）。次のターン開始時に正体を現し、最初の攻撃が1.5倍'},
-  STATIC_HAUNT:  {name:'STATIC HAUNT',  frame:'GHOST',   tgt:'none',  role:'OFFENSE',desc:'相手に呪い。このターンと次のターン、ターン開始位置の周囲1マス以内でターンを終えると40ダメージ'},
-  SYSTEM_HACK:   {name:'SYSTEM HACK',   frame:'ENGINEER',tgt:'none',  role:'DEFENSE',desc:'予約しても相手には見えない。相手の予約が確定した瞬間に侵入し、相手の全行動を見てから自分の行動を組み直せる'},
-  ORBITAL_STRIKE:{name:'ORBITAL STRIKE',frame:'ENGINEER',tgt:'any',   role:'OFFENSE',desc:'盤面のどこでも3×3を指定。次のターンの全行動の後に着弾して70ダメージ（予告は相手にも見える）'},
+  GIGA_CANNON:   {name:'CANNON',   frame:'HEAVY',   tgt:'dir4',  role:'OFFENSE',desc:'縦か横の一列を壁ごと撃ち抜いて60ダメージ。撃ったターンは移動できない'},
+  PHANTOM_MIRAGE:{name:'MIRAGE',frame:'GHOST',   tgt:'square',range:3,role:'DEFENSE',desc:'その場に分身を残し、姿を消して3マス以内へ移動。分身は0BITで毎ターン3マスまで動かせる。分身が攻撃を受けると消えて本体が現れる。消えている間の攻撃はダメージ2倍（攻撃すると姿を現す）。次のターン終了時に解除'},
+  STATIC_HAUNT:  {name:'HUNT',  frame:'GHOST',   tgt:'none',  role:'OFFENSE',desc:'相手に呪い。このターンと次のターン、ターン開始位置の周囲1マス以内でターンを終えると80ダメージ'},
+  SYSTEM_HACK:   {name:'HACK',   frame:'ENGINEER',tgt:'none',  role:'DEFENSE',desc:'予約しても相手には見えない。相手の予約が確定した瞬間に侵入し、相手の全行動を見てから自分の行動を組み直せる'},
+  ORBITAL_STRIKE:{name:'STRIKE',frame:'ENGINEER',tgt:'any',   role:'OFFENSE',desc:'盤面のどこでも5×5を指定。次のターンの全行動の後に着弾して60ダメージ（予告は相手にも見える）'},
 };
-const ULT_SHORT={COUNTER_RUSH:'COUNTER',OVERDRIVE:'OVERDRIVE',IRON_WALL:'IRON WALL',GIGA_CANNON:'GIGA CANNON',PHANTOM_MIRAGE:'MIRAGE',STATIC_HAUNT:'HAUNT',SYSTEM_HACK:'HACK',ORBITAL_STRIKE:'ORBITAL'};
+const ULT_SHORT={COUNTER_RUSH:'COUNTER',OVERDRIVE:'OVERDRIVE',IRON_WALL:'IRON WALL',GIGA_CANNON:'CANNON',PHANTOM_MIRAGE:'MIRAGE',STATIC_HAUNT:'HUNT',SYSTEM_HACK:'HACK',ORBITAL_STRIKE:'STRIKE'};
 const ULT_OF=f=>Object.keys(ULTS).filter(k=>ULTS[k].frame===f);
 const ULT_COLOR='#ffd23a';
-const GAUGE_MAX=100,G_TAKEN=.25,G_DEALT=.05,G_TURN=13;   // ≈ ready on turn 6 (5–7); taking damage makes it come sooner
-const MINE_DMG=35,OD_NEXT=5,COUNTER_MULT=2,COUNTER_CAP=55,GIGA_DMG=60,HAUNT_DMG=40,ORBITAL_DMG=70,MIRAGE_CRIT=1.5,OD_BIT=4,OD_MV=3;
+const GAUGE_MAX=100,G_TAKEN=.4,G_DEALT=.1,G_TURN=10;   // ≈ ready on turn 6 (5–7); taking damage makes it come sooner
+const MINE_DMG=20,OD_NEXT=5,COUNTER_MULT=2,GIGA_DMG=60,HAUNT_DMG=80,ORBITAL_DMG=60,MIRAGE_MULT=2,DECOY_STEPS=3,OD_BIT=4,OD_MV=3,WALL_HP=30;
 const QUICK_ULT=new Set(['COUNTER_RUSH','OVERDRIVE','IRON_WALL','PHANTOM_MIRAGE','STATIC_HAUNT','SYSTEM_HACK','ORBITAL_STRIKE']);
 const isHack=p=>(p||[]).some(a=>a&&a.type==='ult'&&a.key==='SYSTEM_HACK');
 const HACK_MARK=()=>({type:'ult',key:'SYSTEM_HACK',rx:0,ry:0});
 /* these resolve before attacks inside a step (reactive / self-buff) */
 const QUICK=new Set(['SHIELD','REPAIR','X_RAY','JAMMER','SILENCE','CHARGE','REFLECT','ANCHOR','OVERCLOCK','BACKSTEP','PARRY','FORTIFY','SMOKE']);
-const FORT_TAKEN=.5,FORT_DEALT=1.2,FORT_MOVE=3;
+const FORT_TAKEN=.5,FORT_DEALT=1.2;
+const xrTgt=W=>W.tgt==='line'||W.tgt==='lineS';
 const inSmoke=u=>!!S.smokes&&S.smokes.some(m=>Math.abs(m.x-u.x)<=1&&Math.abs(m.y-u.y)<=1);
 const CPU_LEVELS=['EASY','NORMAL','HARD'];
 const RIVALS=['CRIMSON JACK','KAGEROU','VANTA SAGE','RED ORBIT','MOTHRA-9','GLITCH QUEEN','NOVA HOUND','SHIKIGAMI','TOKYO DRIFTER','LUNA VOLT'];
@@ -846,7 +853,7 @@ function makeUnit(side,cfg,pos){
     x:pos[0],y:pos[1],sx:pos[0],sy:pos[1],hp:f.hp,maxHp:f.hp,baseAp:f.ap,ap:f.ap,mv:f.mv||N,nextApMod:0,
     shield:false,stunned:false,xray:false,reflect:false,anchor:false,overclock:false,silencedTurn:-1,gutsUsed:false,moveDist:0,
     facing:side===0?7:3,alive:true,revealed:[],canceled:false,backstep:false,parryUntil:-1,fort:false,
-    ult:(ULTS[cfg.ult]&&ULTS[cfg.ult].frame===cfg.frame)?cfg.ult:ULT_OF(cfg.frame)[0],gauge:0,ultUsed:false,counter:null,iron:false,odNext:false,overheat:false,lockMv:0,mirage:null,haunt:null,crit:false,ultHold:false};
+    ult:(ULTS[cfg.ult]&&ULTS[cfg.ult].frame===cfg.frame)?cfg.ult:ULT_OF(cfg.frame)[0],gauge:0,ultUsed:false,counter:null,iron:false,odNext:false,overheat:false,lockMv:0,mirage:null,haunt:null};
 }
 
 /* Dig a maze (recursive backtracker), then knock down walls until only a
@@ -868,7 +875,7 @@ function genMap(rng){
     const walls=[];
     for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(m[y][x]===1)walls.push([x,y]);
     for(let i=walls.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[walls[i],walls[j]]=[walls[j],walls[i]];}
-    const keep=7+Math.floor(rng()*3);          // 7–9 obstacles on 49 cells
+    const keep=9+Math.floor(rng()*4);          // 9–12 obstacles on 49 cells
     while(walls.length>keep){const [x,y]=walls.pop();m[y][x]=0;}
     // flood fill from player spawn
     const seen=[...Array(N)].map(()=>Array(N).fill(false));const q=[P0];seen[P0[1]][P0[0]]=true;let reach=0;
@@ -889,7 +896,7 @@ function newMatch(seed,cfg0,cfg1,opt){
   if(opt.mirror)map=map.map((r,y)=>r.map((_,x)=>map[N-1-y][N-1-x]));
   S={seed,map,wallHp:{},turn:1,step:0,phase:'plan',over:false,hostSide:opt.mirror?1:0,
      units:[makeUnit(0,cfg0,spawns[0]),makeUnit(1,cfg1,spawns[1])],
-     spikes:[],clusters:[],mortars:[],burns:[],mines:[],orbitals:[],smokes:[],stats:[{dealt:0,taken:0},{dealt:0,taken:0}]};
+     spikes:[],shells:[],mortars:[],burns:[],mines:[],orbitals:[],smokes:[],stats:[{dealt:0,taken:0},{dealt:0,taken:0}]};
   startTurn();
   return S;
 }
@@ -900,9 +907,28 @@ function unitAt(x,y,exceptSide){
   for(const u of S.units){if(u&&u.alive&&u.x===x&&u.y===y&&u.side!==exceptSide)return u;}
   return null;
 }
+/* attack hit test: real units first, then a MIRAGE decoy (a stand-in that only breaks) */
+function decoyAt(x,y,exceptSide){
+  if(!S)return null;
+  for(const u of S.units){if(u&&u.alive&&u.mirage&&u.mirage.x===x&&u.mirage.y===y&&u.side!==exceptSide)return {decoy:true,owner:u,side:u.side,x,y,alive:true,anchor:false};}
+  return null;
+}
+function hitAt(x,y,exceptSide){return unitAt(x,y,exceptSide)||decoyAt(x,y,exceptSide);}
+/* what `side` can see at a cell: a hidden MIRAGE body shows up where its decoy is */
+function seenAt(x,y,side){
+  if(!S)return null;
+  for(const u of S.units){if(!u||!u.alive||u.side===side)continue;const p=u.mirage?u.mirage:u;if(p.x===x&&p.y===y)return u;}
+  return null;
+}
+function breakMirage(u,why){
+  if(!u||!u.mirage)return;
+  const dc={x:u.mirage.x,y:u.mirage.y};u.mirage=null;reveal(u,'ULT');
+  ev('mirageBreak',{side:u.side,why,decoy:dc,body:{x:u.x,y:u.y}});ev('delay',{ms:why==='time'?500:650});
+}
 function otherOf(u){return S.units[1-u.side];}
 function arcCells(x,y,k,arc){const out=[];for(let j=-arc;j<=arc;j++){const d=DIR8[(k+j+8)%8];const cx=x+d[0],cy=y+d[1];if(inB(cx,cy))out.push({x:cx,y:cy});}return out;}
 function ring8(x,y){const o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&inB(x+dx,y+dy))o.push({x:x+dx,y:y+dy});}return o;}
+function box25(x,y){const o=[];for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){if(inB(x+dx,y+dy))o.push({x:x+dx,y:y+dy});}return o;}
 function box9(x,y){const o=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(inB(x+dx,y+dy))o.push({x:x+dx,y:y+dy});}return o;}
 function nearWall(x,y){for(const d of DIR8){const cx=x+d[0],cy=y+d[1];if(inB(cx,cy)&&S.map[cy][cx]!==0)return true;}return false;}
 function reveal(u,key){if(u&&!u.revealed.includes(key))u.revealed.push(key);}
@@ -920,16 +946,15 @@ function afterHit(t,sSide,dealt){
 }
 function dealDamage(t,amt,src){
   if(!t||!t.alive||amt<=0)return 0;
+  if(t.decoy){breakMirage(t.owner,'decoy');return 0;}
   const sSide=src&&src.side!=null?src.side:null;
+  if(t.mirage)breakMirage(t,'hit');
   if(t.iron&&sSide!=null&&sSide!==t.side&&!(src&&src.refl)){
     ev('ironWall',{side:t.side,amount:amt});ev('delay',{ms:150});
     dealDamage(S.units[sSide],amt,{side:t.side,refl:true});return 0;}
-  if(t.reflect&&src&&src.ranged&&sSide!=null&&sSide!==t.side){
-    t.reflect=false;ev('reflect',{side:t.side,to:sSide});ev('delay',{ms:150});
-    dealDamage(S.units[sSide],Math.round(amt*REFLECT_RATE),{side:t.side,refl:true});return 0;}
   if(src&&src.atk&&sSide!=null&&sSide!==t.side){
     if(src.ranged&&inSmoke(t)){ev('smokeBlock',{side:t.side});return 0;}
-    if(src.melee&&t.parryUntil>=S.step){t.parryUntil=-1;ev('parry',{side:t.side,to:sSide});ev('delay',{ms:140});stunUnit(S.units[sSide]);return 0;}
+    if(t.parryUntil>=S.step&&cheb(t,S.units[sSide])<=1){t.parryUntil=-1;ev('parry',{side:t.side,to:sSide});ev('delay',{ms:140});stunUnit(S.units[sSide]);return 0;}
     if(t.backstep){
       const a=S.units[sSide];let dx=Math.sign(t.x-a.x),dy=Math.sign(t.y-a.y);if(!dx&&!dy)dx=1;
       for(const [mx,my] of [[dx,dy],[dx,0],[0,dy]]){
@@ -937,6 +962,12 @@ function dealDamage(t,amt,src){
         if(isFloor(nx,ny)&&!unitAt(nx,ny,-1)){const from={x:t.x,y:t.y};t.x=nx;t.y=ny;t.backstep=false;t.fort=false;ev('backstep',{side:t.side,from,to:{x:nx,y:ny}});onEnter(t);return 0;}
       }
       t.backstep=false;ev('status',{side:t.side,text:'NO ROOM'});
+    }
+    if(t.reflect){
+      t.reflect=false;const back=Math.round(amt*REFLECT_RATE);amt-=back;
+      ev('reflect',{side:t.side,to:sSide,amount:back});ev('delay',{ms:150});
+      dealDamage(S.units[sSide],back,{side:t.side,refl:true});
+      if(amt<=0||!t.alive)return 0;
     }
   }
   if(t.fort)amt=Math.max(1,Math.round(amt*FORT_TAKEN));
@@ -970,7 +1001,7 @@ function wallDamage(x,y,amt){
   else ev('wallHit',{x,y,hp:S.wallHp[k]});
 }
 function stunUnit(t){
-  if(!t||!t.alive)return;
+  if(!t||!t.alive||t.decoy)return;
   if(t.anchor){ev('status',{side:t.side,text:'ANCHORED'});return;}
   t.stunned=true;ev('stun',{side:t.side});
 }
@@ -990,7 +1021,7 @@ function onEnter(u){
   }
 }
 function knock(t,k,dist,crash,srcSide){
-  if(!t||!t.alive)return 0;
+  if(!t||!t.alive||t.decoy)return 0;
   if(t.anchor){ev('status',{side:t.side,text:'ANCHORED'});return 0;}
   const [dx,dy]=DIR8[k];let moved=0;
   for(let i=0;i<dist;i++){
@@ -1036,6 +1067,7 @@ function phaseMove(acts){
     const same=it[0].d.x===it[1].d.x&&it[0].d.y===it[1].d.y;
     const cross=it[0].d.x===U[1].x&&it[0].d.y===U[1].y&&it[1].d.x===U[0].x&&it[1].d.y===U[0].y;
     if(same||cross){
+      for(let s=0;s<2;s++)if(U[s].mirage)breakMirage(U[s],'hit');
       const cx=same?it[0].d.x:(U[0].x+U[1].x)/2,cy=same?it[0].d.y:(U[0].y+U[1].y)/2;
       ev('clash',{x:cx,y:cy});
       for(let s=0;s<2;s++)ev('bump',{side:s,k:U[s].facing,reason:'clash'});
@@ -1053,7 +1085,7 @@ function phaseMove(acts){
     if(o.alive&&it[s].d.x===o.x&&it[s].d.y===o.y){
       const oi=it[1-s];
       const leaving=oi&&oi.valid&&!(oi.d.x===U[s].x&&oi.d.y===U[s].y);
-      if(!leaving){ev('bump',{side:s,k:U[s].facing,reason:'unit'});continue;}
+      if(!leaving){if(o.mirage)breakMirage(o,'touch');ev('bump',{side:s,k:U[s].facing,reason:'unit'});continue;}
     }
     ok[s]=true;
   }
@@ -1064,7 +1096,24 @@ function phaseMove(acts){
     ev('move',{side:s,from,to:{x:u.x,y:u.y}});
   }
   for(let s=0;s<2;s++)if(ok[s])onEnter(U[s]);
+  // walking into a decoy exposes it
+  for(let s=0;s<2;s++){const o=U[1-s];if(ok[s]&&o.mirage&&o.mirage.x===U[s].x&&o.mirage.y===U[s].y)breakMirage(o,'touch');}
 }
+/* MIRAGE decoy steps (0 BIT): blocked by walls and machines, otherwise free */
+function decoyMove(u,a){
+  if(!u.mirage||!u.alive)return;
+  const nx=u.mirage.x+a.dx,ny=u.mirage.y+a.dy;
+  if(!isFloor(nx,ny)||unitAt(nx,ny,-1))return;
+  const from={x:u.mirage.x,y:u.mirage.y};u.mirage.x=nx;u.mirage.y=ny;
+  ev('dmove',{side:u.side,from,to:{x:nx,y:ny}});
+}
+/* HOWITZER: a 3-cell line across the line of fire (vertical if the shot is mostly sideways) */
+function howCells(ox,oy,tx,ty){
+  const rx=tx-ox,ry=ty-oy,out=[];
+  for(const o of [-1,0,1]){const x=Math.abs(rx)>=Math.abs(ry)?tx:tx+o,y=Math.abs(rx)>=Math.abs(ry)?ty+o:ty;if(inB(x,y))out.push({x,y});}
+  return out;
+}
+function crossCells(x,y){const o=[];for(const [dx,dy] of DIR4)if(inB(x+dx,y+dy))o.push({x:x+dx,y:y+dy});return o;}
 
 /* ── attacks. act.rx/ry is relative to the attacker's position at plan time
       and gets applied to wherever the attacker actually stands now ── */
@@ -1075,10 +1124,11 @@ function doAttack(u,a){
   const k=dirIndex(a.rx,a.ry),[dx,dy]=DIR8[k];
   u.facing=k;
   const bonus=u.frame==='GHOST'?momBonus(u.moveDist):0;
-  const mult=(u.overclock?OC_MULT:1)*(u.crit?MIRAGE_CRIT:1)*(u.fort?FORT_DEALT:1),oc=v=>Math.round(v*mult);
-  if(u.crit){u.crit=false;ev('crit',{side:u.side});}
+  const ambush=!!u.mirage;if(ambush)breakMirage(u,'attack');
+  const mult=(u.overclock?OC_MULT:1)*(ambush?MIRAGE_MULT:1)*(u.fort?FORT_DEALT:1),oc=v=>Math.round(v*mult);
+  if(ambush)ev('crit',{side:u.side});
   const dmg=oc(W.dmg+bonus);
-  const src={side:u.side,ranged:!!W.ranged,melee:!W.ranged&&!['spike','cluster','mortar'].includes(W.kind),atk:true};
+  const src={side:u.side,ranged:!!W.ranged,melee:!W.ranged&&!['spike','cluster','mortar','howitzer'].includes(W.kind),atk:true};
   ev('action',{side:u.side,name:W.name,color:W.color,bonus,oc:u.overclock});
 
   switch(W.kind){
@@ -1087,7 +1137,7 @@ function doAttack(u,a){
       ev('fx',{type:'slash',x:u.x,y:u.y,k,arc:W.arc,color:W.color,cells,blood:W.arc===2});
       let dealt=0,hit=false;
       for(const c of cells){
-        const t=unitAt(c.x,c.y,u.side);
+        const t=hitAt(c.x,c.y,u.side);
         if(t){hit=true;dealt+=dealDamage(t,dmg,src);}
         wallDamage(c.x,c.y,dmg);
       }
@@ -1099,7 +1149,7 @@ function doAttack(u,a){
       const path=[];let x=u.x+dx,y=u.y+dy,hitU=null,hitW=null;
       for(let s=0;s<W.range&&inB(x,y);s++){
         path.push({x,y});
-        const t=unitAt(x,y,u.side);
+        const t=hitAt(x,y,u.side);
         if(t){hitU=t;break;}
         if(S.map[y][x]!==0&&!u.xray){if(S.map[y][x]===2)hitW={x,y};break;}
         x+=dx;y+=dy;
@@ -1115,7 +1165,7 @@ function doAttack(u,a){
     case 'beam':case 'reso':{
       // walk to the board edge; walls never stop it, every unit on it is hit
       const path=[];let x=u.x+dx,y=u.y+dy;const hits=[];
-      while(inB(x,y)){path.push({x,y});const t=unitAt(x,y,u.side);if(t)hits.push(t);x+=dx;y+=dy;}
+      while(inB(x,y)){path.push({x,y});const t=hitAt(x,y,u.side);if(t)hits.push(t);x+=dx;y+=dy;}
       ev('fx',{type:W.kind==='beam'?'beam':'wave',x:u.x,y:u.y,k,path,color:W.color});
       for(const c of path)if(S.map[c.y][c.x]===2)wallDamage(c.x,c.y,dmg);
       for(const t of hits){
@@ -1129,7 +1179,7 @@ function doAttack(u,a){
     case 'pile':{
       const tx=u.x+dx,ty=u.y+dy;
       ev('fx',{type:'pile',x:u.x,y:u.y,k,color:W.color,cells:[{x:tx,y:ty}]});
-      const t=unitAt(tx,ty,u.side);
+      const t=hitAt(tx,ty,u.side);
       if(t){dealDamage(t,dmg,src);if(t.alive)knock(t,k,2,true,u.side);}
       else{wallDamage(tx,ty,dmg);ev('miss',{side:u.side});}
       break;
@@ -1140,7 +1190,7 @@ function doAttack(u,a){
       for(let s=1;s<=dist;s++){
         const nx=sx+dx*s,ny=sy+dy*s;
         if(!isFloor(nx,ny))break;
-        const t=unitAt(nx,ny,u.side);
+        const t=hitAt(nx,ny,u.side);
         if(t){
           if(target)break;
           target=t;hitStep=s;
@@ -1157,7 +1207,7 @@ function doAttack(u,a){
         ev('delay',{ms:70*hitStep});
         const bon=u.frame==='GHOST'?momBonus(u.moveDist+hitStep-1):0;
         dealDamage(target,oc(W.dmg+bon),src);
-        if(target.alive&&spot){const from={x:target.x,y:target.y};target.x=spot.x;target.y=spot.y;ev('knock',{side:target.side,from,to:spot,fling:true});onEnter(target);}
+        if(target.alive&&spot&&!target.decoy){const from={x:target.x,y:target.y};target.x=spot.x;target.y=spot.y;ev('knock',{side:target.side,from,to:spot,fling:true});onEnter(target);}
       }else ev('miss',{side:u.side});
       u.moveDist+=stop;
       if(stop>0)onEnter(u);
@@ -1175,34 +1225,37 @@ function doAttack(u,a){
       const tx=u.x+a.rx,ty=u.y+a.ry;
       ev('fx',{type:'throw',x0:u.x,y0:u.y,x1:tx,y1:ty,color:W.color});
       if(!inB(tx,ty)||S.map[ty][tx]===1){ev('fail',{side:u.side,text:'THROW FAILED'});break;}
+      const arms=crossCells(tx,ty);
       ev('fx',{type:'impact',x:tx,y:ty,color:W.color,cells:[{x:tx,y:ty}]});
-      const t=unitAt(tx,ty,-1);
-      if(t)dealDamage(t,dmg,src);else ev('miss',{side:u.side});
+      ev('fx',{type:'cluster',x:tx,y:ty,cells:arms,color:W.color});
+      let hit=false;
+      const t=hitAt(tx,ty,u.side);if(t){hit=true;dealDamage(t,dmg,src);}
       wallDamage(tx,ty,dmg);
-      S.clusters.push({x:tx,y:ty,owner:u.side,step:S.step,mult});
-      ev('clusterArm',{x:tx,y:ty});
+      const rd=oc(CLUSTER_RING+bonus);
+      for(const c of arms){const q=hitAt(c.x,c.y,u.side);if(q){hit=true;dealDamage(q,rd,src);}wallDamage(c.x,c.y,rd);}
+      if(!hit)ev('miss',{side:u.side});
       break;
     }
     case 'scatter':{
       const c1={x:u.x+dx,y:u.y+dy};
       if(!inB(c1.x,c1.y)){ev('miss',{side:u.side});break;}
       const far=[-1,0,1].map(j=>{const d=DIR8[(k+j+8)%8];return {x:c1.x+d[0],y:c1.y+d[1]};}).filter(c=>inB(c.x,c.y));
-      const open=S.map[c1.y][c1.x]===0;
+      const open=S.map[c1.y][c1.x]===0||u.xray;
       ev('fx',{type:'scatter',x:u.x,y:u.y,k,near:c1,far:open?far:[],color:W.color});
       let hit=false;
-      const t1=unitAt(c1.x,c1.y,u.side);if(t1){hit=true;dealDamage(t1,dmg,src);}
-      if(!open)wallDamage(c1.x,c1.y,dmg);
-      else for(const c of far){if(S.map[c.y][c.x]!==0){wallDamage(c.x,c.y,oc(SCATTER_FAR));continue;}const t=unitAt(c.x,c.y,u.side);if(t){hit=true;dealDamage(t,oc(SCATTER_FAR+bonus),src);}}
+      const t1=hitAt(c1.x,c1.y,u.side);if(t1){hit=true;dealDamage(t1,dmg,src);}
+      if(S.map[c1.y][c1.x]!==0)wallDamage(c1.x,c1.y,dmg);
+      if(open)for(const c of far){if(S.map[c.y][c.x]!==0){wallDamage(c.x,c.y,oc(SCATTER_FAR));continue;}const t=hitAt(c.x,c.y,u.side);if(t){hit=true;dealDamage(t,oc(SCATTER_FAR+bonus),src);}}
       if(!hit)ev('miss',{side:u.side});
       break;
     }
     case 'flame':{
-      const path=[];let x=u.x+dx,y=u.y+dy,wall=null;
-      for(let s=0;s<W.range&&inB(x,y);s++){if(S.map[y][x]!==0){if(S.map[y][x]===2)wall={x,y};break;}path.push({x,y});x+=dx;y+=dy;}
+      const path=[],walls=[];let x=u.x+dx,y=u.y+dy;
+      for(let s=0;s<W.range&&inB(x,y);s++){if(S.map[y][x]!==0){if(S.map[y][x]===2)walls.push({x,y});if(!u.xray)break;x+=dx;y+=dy;continue;}path.push({x,y});x+=dx;y+=dy;}
       ev('fx',{type:'flame',x:u.x,y:u.y,k,path,color:W.color});
       let hit=false;
-      for(const c of path){const t=unitAt(c.x,c.y,u.side);if(t){hit=true;dealDamage(t,dmg,src);}}
-      if(wall)wallDamage(wall.x,wall.y,dmg);
+      for(const c of path){const t=hitAt(c.x,c.y,u.side);if(t){hit=true;dealDamage(t,dmg,src);}}
+      for(const w of walls)wallDamage(w.x,w.y,dmg);
       for(const c of path){S.burns=S.burns.filter(b=>!(b.x===c.x&&b.y===c.y));S.burns.push({x:c.x,y:c.y,owner:u.side,expire:S.turn+1});}
       if(path.length)ev('burnSet',{cells:path,side:u.side});
       if(!hit)ev('miss',{side:u.side});
@@ -1211,7 +1264,7 @@ function doAttack(u,a){
     case 'shock':{
       const tx=u.x+dx,ty=u.y+dy;
       ev('fx',{type:'shock',x:u.x,y:u.y,k,color:W.color,cells:[{x:tx,y:ty}]});
-      const t=unitAt(tx,ty,u.side);
+      const t=hitAt(tx,ty,u.side);
       if(t){dealDamage(t,dmg,src);stunUnit(t);}
       else{wallDamage(tx,ty,dmg);ev('miss',{side:u.side});}
       break;
@@ -1224,32 +1277,41 @@ function doAttack(u,a){
       ev('mortarMark',{x:tx,y:ty,side:u.side});
       break;
     }
+    case 'howitzer':{
+      const tx=u.x+a.rx,ty=u.y+a.ry;
+      if(!inB(tx,ty)||S.map[ty][tx]===1){ev('fail',{side:u.side,text:'NO TARGET'});break;}
+      const cells=howCells(u.x,u.y,tx,ty);
+      ev('fx',{type:'mortarLaunch',x:u.x,y:u.y,tx,ty,color:W.color});
+      S.shells.push({x:tx,y:ty,cells,owner:u.side,step:S.step,dmg});
+      ev('shellMark',{x:tx,y:ty,cells,side:u.side});
+      break;
+    }
   }
 }
-const SHIELD_ABS=35,REFLECT_RATE=.7;
+const SHIELD_ABS=35,REFLECT_RATE=.5;
 const SILENCE_AP=2,REPAIR_HP=35,OC_MULT=1.5;
 const MOMENTUM=4,MOMENTUM_MAX=16,CRASH_DMG=15,DRAIN=.4,GUTS_ON=1,AP_CAP=12,ADR_BIT=2;
 const momBonus=d=>Math.min(MOMENTUM_MAX,Math.max(0,d)*MOMENTUM);
-const SCATTER_FAR=20,MORTAR_RING=12,RESO_WALL=32;
+const SCATTER_FAR=20,MORTAR_RING=12,RESO_WALL=36;
 /* shells land after the last step; enemy fire burns whoever stands in it */
 function endOfSteps(){
   let any=false;
   for(const m of S.mortars){
     any=true;const cells=box9(m.x,m.y);
     ev('fx',{type:'mortar',x:m.x,y:m.y,cells,color:WEAPONS.ARC_MORTAR.color});ev('delay',{ms:360});
-    for(const c of cells){const t=unitAt(c.x,c.y,-1);const center=c.x===m.x&&c.y===m.y;if(t)dealDamage(t,center?m.dmg:m.ring,{side:m.owner});wallDamage(c.x,c.y,center?m.dmg:m.ring);}
+    for(const c of cells){const t=hitAt(c.x,c.y,-1);const center=c.x===m.x&&c.y===m.y;if(t)dealDamage(t,center?m.dmg:m.ring,{side:m.owner});wallDamage(c.x,c.y,center?m.dmg:m.ring);}
   }
   S.mortars=[];
   for(const u of S.units){if(!u.alive)continue;const b=S.burns.find(b=>b.owner!==u.side&&b.x===u.x&&b.y===u.y);if(b){any=true;ev('burnHit',{x:u.x,y:u.y,side:u.side});dealDamage(u,8,{side:b.owner});}}
   if(ultEndOfSteps())any=true;
   return any;
 }
-/* the 8 cells around the cluster bomb (not its landing cell) */
-const CLUSTER_RING=22,VOID_BURST=40,VOID_TICK=14;
-function clusterExplode(c){
-  const cells=ring8(c.x,c.y);
-  ev('fx',{type:'cluster',x:c.x,y:c.y,cells,color:WEAPONS.CLUSTER_B.color});
-  const d=Math.round(CLUSTER_RING*(c.mult||1));for(const cc of cells){const t=unitAt(cc.x,cc.y,-1);if(t)dealDamage(t,d,{side:c.owner});wallDamage(cc.x,cc.y,d);}
+/* CLUSTER arms (4 orthogonal cells) · SPIKE burst / area tick */
+const CLUSTER_RING=20,VOID_BURST=40,VOID_TICK=14;
+/* a HOWITZER shell lands one step after it was fired */
+function shellExplode(c){
+  ev('fx',{type:'mortar',x:c.x,y:c.y,cells:c.cells,color:WEAPONS.HOWITZER.color,label:'HOWITZER'});ev('delay',{ms:360});
+  for(const cc of c.cells){const t=hitAt(cc.x,cc.y,-1);if(t)dealDamage(t,c.dmg,{side:c.owner});wallDamage(cc.x,cc.y,c.dmg);}
 }
 
 function doSkill(u,a){
@@ -1273,13 +1335,16 @@ function doSkill(u,a){
       const from={x:u.x,y:u.y};u.x=u.sx;u.y=u.sy;u.fort=false;ev('teleport',{side:u.side,from,to:{x:u.x,y:u.y},kind:'rewind'});onEnter(u);
       break;}
     case 'SHIELD':u.shield=S.turn+1;ev('fx',{type:'shield',x:u.x,y:u.y,side:u.side});break;
-    case 'REPAIR':ev('fx',{type:'repair',x:u.x,y:u.y});healUnit(u,REPAIR_HP,'REPAIR');break;
+    case 'REPAIR':ev('fx',{type:'repair',x:u.x,y:u.y,side:u.side});healUnit(u,REPAIR_HP,'REPAIR');break;
     case 'JAMMER':o.nextApMod-=3;ev('fx',{type:'jam',x:o.x,y:o.y,side:o.side});ev('status',{side:o.side,text:'BIT-3 NEXT'});break;
     case 'HOOK':{
+      if(u.mirage)breakMirage(u,'skill');
       const k=dirIndex(a.rx,a.ry),[dx,dy]=DIR8[k];u.facing=k;
       let x=u.x+dx,y=u.y+dy,hitU=null;const path=[];
-      while(inB(x,y)&&S.map[y][x]===0){path.push({x,y});const t=unitAt(x,y,u.side);if(t){hitU=t;break;}x+=dx;y+=dy;}
+      while(inB(x,y)&&S.map[y][x]===0){path.push({x,y});const t=hitAt(x,y,u.side);if(t){hitU=t;break;}x+=dx;y+=dy;}
       ev('fx',{type:'chain',x:u.x,y:u.y,k,path,hit:!!hitU,color:'#2dffa8'});
+      if(hitU&&hitU.decoy){breakMirage(hitU.owner,'decoy');hitU=null;}
+      else if(hitU&&hitU.mirage)breakMirage(hitU,'hit');
       if(hitU){
         const fx=u.x+dx,fy=u.y+dy;
         if(hitU.anchor)ev('status',{side:hitU.side,text:'ANCHORED'});
@@ -1287,16 +1352,17 @@ function doSkill(u,a){
         else{const from={x:hitU.x,y:hitU.y};hitU.x=fx;hitU.y=fy;ev('knock',{side:hitU.side,from,to:{x:fx,y:fy},hook:true});onEnter(hitU);}
       }else ev('miss',{side:u.side});
       break;}
-    case 'CHARGE':u.nextApMod+=4;ev('fx',{type:'charge',x:u.x,y:u.y});break;
+    case 'CHARGE':u.nextApMod+=4;ev('fx',{type:'charge',x:u.x,y:u.y,side:u.side});break;
     case 'X_RAY':u.xray=true;ev('fx',{type:'xray',x:u.x,y:u.y,side:u.side});break;
     case 'WALL_GEN':{
       const tx=u.x+a.rx,ty=u.y+a.ry;
-      if(isFloor(tx,ty)&&!unitAt(tx,ty,-1)){S.map[ty][tx]=2;S.wallHp[tx+','+ty]=50;ev('wallGen',{x:tx,y:ty});}
+      if(isFloor(tx,ty)&&!unitAt(tx,ty,-1)){S.map[ty][tx]=2;S.wallHp[tx+','+ty]=WALL_HP;ev('wallGen',{x:tx,y:ty});}
       else ev('fail',{side:u.side,text:'NO SPACE'});
       break;}
     case 'SWAP':{
       if(o.alive&&o.anchor){ev('status',{side:o.side,text:'ANCHORED'});ev('fail',{side:u.side,text:'SWAP FAILED'});}
       else if(o.alive&&cheb(u,o)<=def.range){
+        if(u.mirage)breakMirage(u,'skill');if(o.mirage)breakMirage(o,'hit');
         const A={x:u.x,y:u.y},B={x:o.x,y:o.y};
         u.x=B.x;u.y=B.y;o.x=A.x;o.y=A.y;u.fort=false;
         ev('fx',{type:'swap',a:A,b:B});
@@ -1325,25 +1391,12 @@ function doSkill(u,a){
 }
 
 /* ── ultimates ── */
-function mirageDecoys(o,dest){
-  const out=[];if(o.x!==dest.x||o.y!==dest.y)out.push({x:o.x,y:o.y});
-  while(out.length<2){
-    let best=null,bd=-1;
-    for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-      if(Math.max(Math.abs(x-o.x),Math.abs(y-o.y))>3||!isFloor(x,y)||unitAt(x,y,-1))continue;
-      if((x===dest.x&&y===dest.y)||out.some(c=>c.x===x&&c.y===y))continue;
-      const d=Math.max(Math.abs(x-dest.x),Math.abs(y-dest.y))+Math.min(...out.map(c=>Math.max(Math.abs(x-c.x),Math.abs(y-c.y))),9)*.5;
-      if(d>bd){bd=d;best={x,y};}
-    }
-    if(!best)break;out.push(best);
-  }
-  return out;
-}
 function doUlt(u,a){
   if(!u||!a||u.ultUsed||a.key!==u.ult)return;
   const o=otherOf(u),key=a.key;
-  u.ultUsed=true;u.gauge=0;reveal(u,'ULT');
+  u.ultUsed=true;u.gauge=0;if(key!=='PHANTOM_MIRAGE')reveal(u,'ULT');
   if(key==='SYSTEM_HACK'){ev('hackLog',{side:u.side});return;}   // its effect happened before resolution
+  if(u.mirage&&key==='GIGA_CANNON')breakMirage(u,'skill');
   if(key!=='PHANTOM_MIRAGE')ev('ult',{side:u.side,key});
   switch(key){
     case 'COUNTER_RUSH':u.counter={taken:0};break;
@@ -1352,19 +1405,20 @@ function doUlt(u,a){
     case 'GIGA_CANNON':{
       const k=dirIndex(Math.sign(a.rx)*(a.ry?0:1),Math.sign(a.ry)*(a.rx?0:1)),[dx,dy]=DIR8[k];u.facing=k;
       const path=[];let x=u.x+dx,y=u.y+dy;const hits=[];
-      while(inB(x,y)){path.push({x,y});const t=unitAt(x,y,u.side);if(t)hits.push(t);x+=dx;y+=dy;}
+      while(inB(x,y)){path.push({x,y});const t=hitAt(x,y,u.side);if(t)hits.push(t);x+=dx;y+=dy;}
       ev('fx',{type:'giga',x:u.x,y:u.y,k,path,color:ULT_COLOR});
       for(const c of path)if(S.map[c.y][c.x]===2)wallDamage(c.x,c.y,GIGA_DMG);
       for(const t of hits)dealDamage(t,GIGA_DMG,{side:u.side});
       if(!hits.length)ev('miss',{side:u.side});
-      u.lockMv=S.turn+1;
+      u.lockMv=S.turn;
       break;}
     case 'PHANTOM_MIRAGE':{
+      // the decoy stays where the body stood; the body vanishes and slips away
       let dest={x:u.x+a.rx,y:u.y+a.ry};
-      if(!isFloor(dest.x,dest.y)||unitAt(dest.x,dest.y,u.side))dest={x:u.x,y:u.y};
-      const from={x:u.x,y:u.y},decoys=mirageDecoys(from,dest);
-      u.x=dest.x;u.y=dest.y;u.mirage={decoys,reveal:S.turn+1};u.ultHold=true;
-      ev('mirage',{side:u.side,from,to:dest,decoys});
+      if(!isFloor(dest.x,dest.y)||unitAt(dest.x,dest.y,-1))dest={x:u.x,y:u.y};
+      const from={x:u.x,y:u.y};
+      u.mirage={x:from.x,y:from.y,until:S.turn+1};u.x=dest.x;u.y=dest.y;u.fort=false;
+      ev('mirage',{side:u.side,from,to:dest});
       onEnter(u);
       break;}
     case 'STATIC_HAUNT':o.haunt={owner:u.side,until:S.turn+1};ev('hauntSet',{side:o.side});break;
@@ -1377,9 +1431,9 @@ function doUlt(u,a){
 function ultEndOfSteps(){
   let any=false;
   for(const ob of S.orbitals.filter(q=>q.land===S.turn)){
-    any=true;const cells=box9(ob.x,ob.y);
+    any=true;const cells=box25(ob.x,ob.y);
     ev('fx',{type:'orbital',x:ob.x,y:ob.y,cells,color:'#ff3355'});ev('delay',{ms:420});
-    for(const c of cells){const t=unitAt(c.x,c.y,-1);if(t)dealDamage(t,ORBITAL_DMG,{side:ob.owner});wallDamage(c.x,c.y,ORBITAL_DMG);}
+    for(const c of cells){const t=hitAt(c.x,c.y,-1);if(t)dealDamage(t,ORBITAL_DMG,{side:ob.owner});wallDamage(c.x,c.y,ORBITAL_DMG);}
   }
   S.orbitals=S.orbitals.filter(q=>q.land>S.turn);
   for(const u of S.units){
@@ -1390,9 +1444,10 @@ function ultEndOfSteps(){
   for(const u of S.units){
     if(!u.counter)continue;any=true;const o=otherOf(u),c=u.counter;u.counter=null;
     if(!u.alive||!o.alive)continue;
-    if(c.taken>0){const d=Math.min(COUNTER_CAP,c.taken*COUNTER_MULT);ev('counterHit',{side:u.side,to:o.side,amount:d});ev('delay',{ms:260});dealDamage(o,d,{side:u.side});}
+    if(c.taken>0){const d=c.taken*COUNTER_MULT;ev('counterHit',{side:u.side,to:o.side,amount:d});ev('delay',{ms:260});dealDamage(o,d,{side:u.side});}
     else ev('fail',{side:u.side,text:'COUNTER — NO HIT'});
   }
+  for(const u of S.units){if(u.mirage&&u.mirage.until<=S.turn){any=true;breakMirage(u,'time');}}
   return any;
 }
 
@@ -1401,12 +1456,12 @@ function endTurn(){
   for(const u of S.units){
     if(u.shield&&u.shield<=S.turn){u.shield=false;ev('shieldEnd',{side:u.side});}
     u.stunned=false;u.xray=false;u.reflect=false;u.anchor=false;u.overclock=false;u.moveDist=0;u.canceled=false;
-    u.iron=false;u.counter=null;u.ultHold=false;u.backstep=false;u.parryUntil=-1;u.crit=false;if(u.haunt&&u.haunt.until<=S.turn)u.haunt=null;
+    u.iron=false;u.counter=null;u.backstep=false;u.parryUntil=-1;if(u.haunt&&u.haunt.until<=S.turn)u.haunt=null;
     for(const sk of u.skills){if(sk.cd>0&&sk.usedTurn!==S.turn)sk.cd=Math.max(0,sk.cd-(u.frame==='ENGINEER'?2:1));}
   }
   // VOID areas end at the close of their 2nd active turn
   S.spikes=S.spikes.filter(sp=>{if(sp.state==='zone'&&sp.expire<=S.turn){ev('zoneEnd',{x:sp.x,y:sp.y});return false;}return true;});
-  S.clusters=[];S.mortars=[];
+  S.shells=[];S.mortars=[];
   if(S.smokes&&S.smokes.length){S.smokes=S.smokes.filter(m=>{if(m.expire<=S.turn){ev('smokeEnd',{x:m.x,y:m.y});return false;}return true;});}
   S.burns=S.burns.filter(b=>{if(b.expire<=S.turn){ev('burnEnd',{x:b.x,y:b.y});return false;}return true;});
   S.turn++;
@@ -1418,7 +1473,7 @@ function startTurn(){
       det=true;sp.state='zone';sp.expire=S.turn+1;       // active this turn and next
       const cells=box9(sp.x,sp.y);
       ev('fx',{type:'void',x:sp.x,y:sp.y,cells,color:WEAPONS.VOID_SPIKE.color});
-      const vd=Math.round(VOID_BURST*(sp.mult||1));for(const c of cells){const t=unitAt(c.x,c.y,-1);if(t)dealDamage(t,vd,{side:sp.owner});wallDamage(c.x,c.y,vd);}
+      const vd=Math.round(VOID_BURST*(sp.mult||1));for(const c of cells){const t=hitAt(c.x,c.y,-1);if(t)dealDamage(t,vd,{side:sp.owner});wallDamage(c.x,c.y,vd);}
     }
   }
   for(const u of S.units){
@@ -1443,15 +1498,18 @@ function sanitizePlan(side,plan){
   let ap=u.ap,mvl=u.lockMv>=S.turn?0:u.mv;const out=[];const used=new Set();
   const ultOk=!u.ultUsed&&u.gauge>=GAUGE_MAX;let ultIn=false;
   if(ultOk&&u.ult==='OVERDRIVE'&&plan.some(a=>a&&a.type==='ult'&&a.key==='OVERDRIVE')){ap+=OD_BIT;mvl+=OD_MV;}
-  let fort=u.fort;
-  for(const a of plan.slice(0,16)){
+  let fort=u.fort,mir=!!u.mirage,dm=0;
+  for(const a of plan.slice(0,20)){
     if(!a||typeof a!=='object')break;
     const n=v=>Number.isInteger(v)&&Math.abs(v)<N;
-    if(a.type==='move'){const mc=fort?FORT_MOVE:1;if(!n(a.dx)||!n(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1||ap<mc||mvl<1)break;ap-=mc;mvl-=1;fort=false;out.push({type:'move',dx:a.dx,dy:a.dy});}
-    else if(a.type==='attack'){const W=WEAPONS[u.weapon];if(!n(a.rx)||!n(a.ry)||(!a.rx&&!a.ry)||ap<W.ap)break;ap-=W.ap;if(W.kind==='dash')fort=false;out.push({type:'attack',rx:a.rx,ry:a.ry});}
+    if(a.type==='move'){if(fort||!n(a.dx)||!n(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1||ap<1||mvl<1)break;ap-=1;mvl-=1;out.push({type:'move',dx:a.dx,dy:a.dy});}
+    else if(a.type==='attack'){const W=WEAPONS[u.weapon];if(!n(a.rx)||!n(a.ry)||(!a.rx&&!a.ry)||ap<W.ap||(fort&&W.kind==='dash'))break;ap-=W.ap;out.push({type:'attack',rx:a.rx,ry:a.ry});}
     else if(a.type==='ult'){if(!ultOk||ultIn||a.key!==u.ult||!n(a.rx||0)||!n(a.ry||0))break;ultIn=true;out.push({type:'ult',key:a.key,rx:a.rx||0,ry:a.ry||0});
-      if(a.key==='PHANTOM_MIRAGE')break;if(a.key==='GIGA_CANNON')mvl=0;}
-    else if(a.type==='skill'){const sk=u.skills[a.slot];if(!sk||sk.key!==a.key||used.has(a.key))break;const c=SKILLS[a.key].ap||0;if(ap<c||!n(a.rx||0)||!n(a.ry||0))break;ap-=c;used.add(a.key);if(a.key==='FORTIFY')fort=true;else if(['BLINK','REWIND','SWAP'].includes(a.key))fort=false;out.push({type:'skill',slot:a.slot,key:a.key,rx:a.rx||0,ry:a.ry||0});}
+      if(a.key==='PHANTOM_MIRAGE'){mir=true;fort=false;}if(a.key==='GIGA_CANNON')mvl=0;}
+    else if(a.type==='skill'){const sk=u.skills[a.slot];if(!sk||sk.key!==a.key||used.has(a.key))break;const c=SKILLS[a.key].ap||0;if(ap<c||!n(a.rx||0)||!n(a.ry||0))break;
+      if(fort&&['BLINK','REWIND','SWAP'].includes(a.key))break;ap-=c;used.add(a.key);if(a.key==='FORTIFY')fort=true;out.push({type:'skill',slot:a.slot,key:a.key,rx:a.rx||0,ry:a.ry||0});}
+    else if(a.type==='unfort'){if(!fort||ap<1)break;ap-=1;fort=false;out.push({type:'unfort'});}
+    else if(a.type==='dmove'){if(!mir||dm>=DECOY_STEPS||!n(a.dx)||!n(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1)break;dm++;out.push({type:'dmove',dx:a.dx,dy:a.dy});}
     else break;
   }
   return out;
@@ -1465,36 +1523,42 @@ function stateHash(){
   let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);
 }
 function matchOver(){return !S.units[0].alive||!S.units[1].alive;}
+function hostFirstOf(){const h=S.hostSide|0;return [h,1-h];}
 function* runTurn(plans){
   S.phase='exec';
+  // MIRAGE decoy steps run on their own track, one per step, while the decoy exists
+  const dq=[[],[]];
+  plans=plans.map((p,s)=>p.filter(a=>{if(a&&a.type==='dmove'){dq[s].push(a);return false;}return true;}));
   const len=Math.max(plans[0].length,plans[1].length);
   const fin=()=>{S.over=true;S.phase='over';};
-  for(const u of S.units){
-    if(u.mirage&&u.mirage.reveal<=S.turn){const dc=u.mirage.decoys;u.mirage=null;if(u.alive){u.crit=true;ev('ult',{side:u.side,key:'PHANTOM_MIRAGE',reveal:true,decoys:dc});yield {k:'settle',ms:900};}}
-  }
-  for(let i=0;i<len;i++){
+  const decoyBusy=()=>[0,1].some(s=>dq[s].length&&S.units[s].mirage&&S.units[s].alive);
+  for(let i=0;i<len||(decoyBusy()&&i<len+DECOY_STEPS);i++){
     S.step=i;yield {k:'step',i};
-    const acts=[0,1].map(s=>{const u=S.units[s],a=plans[s][i]||null;if(!a||!u.alive||u.ultHold)return null;
+    let dmv=false;
+    for(let s=0;s<2;s++){const u=S.units[s];if(dq[s].length&&u.mirage&&u.alive){decoyMove(u,dq[s].shift());dmv=true;}}
+    const acts=[0,1].map(s=>{const u=S.units[s],a=plans[s][i]||null;if(!a||!u.alive)return null;
       if(u.stunned){if(!u.canceled){u.canceled=true;ev('cancel',{side:s});}return null;}return a;});
+    if(dmv&&!acts.some(a=>a&&a.type==='move'))yield {k:'settle',ms:260};
     if(acts[0]||acts[1]){
       if(acts.some(a=>a&&a.type==='move')){phaseMove(acts.map(a=>a&&a.type==='move'?a:null));yield {k:'settle',ms:300};if(matchOver())return fin();}
+      for(const s of hostFirstOf()){const a=acts[s];if(a&&a.type==='unfort'&&S.units[s].alive){S.units[s].fort=false;ev('status',{side:s,text:'FORTIFY OFF'});}}
       const h=S.hostSide|0,hostFirst=[h,1-h],order=i%2===0?hostFirst:[1-h,h];
       for(const s of hostFirst){const a=acts[s];if(a&&a.type==='ult'&&QUICK_ULT.has(a.key)&&S.units[s].alive){doUlt(S.units[s],a);yield {k:'settle',ms:a.key==='SYSTEM_HACK'?120:950};}}
       for(const s of hostFirst){const a=acts[s];if(a&&a.type==='skill'&&QUICK.has(a.key)&&S.units[s].alive){doSkill(S.units[s],a);yield {k:'settle',ms:320};}}
       for(const s of order){
         const a=acts[s],u=S.units[s];
-        if(!a||a.type==='move'||(a.type==='skill'&&QUICK.has(a.key))||(a.type==='ult'&&QUICK_ULT.has(a.key)))continue;
+        if(!a||a.type==='move'||a.type==='unfort'||(a.type==='skill'&&QUICK.has(a.key))||(a.type==='ult'&&QUICK_ULT.has(a.key)))continue;
         if(!u.alive&&(a.type!=='attack'||WEAPONS[u.weapon].kind==='dash'))continue;  // simultaneous KO: attacks still fire
         if(a.type==='attack')doAttack(u,a);else if(a.type==='ult')doUlt(u,a);else doSkill(u,a);
         yield {k:'settle',ms:a.type==='attack'?440:a.type==='ult'?900:320};
       }
       if(matchOver())return fin();
     }
-    const due=S.clusters.filter(c=>c.step<i);
-    if(due.length){for(const c of due)clusterExplode(c);S.clusters=S.clusters.filter(c=>c.step>=i);yield {k:'settle',ms:520};if(matchOver())return fin();}
+    const due=S.shells.filter(c=>c.step<i);
+    if(due.length){for(const c of due)shellExplode(c);S.shells=S.shells.filter(c=>c.step>=i);yield {k:'settle',ms:560};if(matchOver())return fin();}
     yield {k:'pause',ms:110};
   }
-  if(S.clusters.length){for(const c of S.clusters)clusterExplode(c);S.clusters=[];yield {k:'settle',ms:520};if(matchOver())return fin();}
+  if(S.shells.length){for(const c of S.shells)shellExplode(c);S.shells=[];yield {k:'settle',ms:560};if(matchOver())return fin();}
   if(endOfSteps()){yield {k:'settle',ms:560};if(matchOver())return fin();}
   endTurn();yield {k:'turnEnd'};
   const det=startTurn();yield {k:'turnStart',det};
@@ -1505,7 +1569,7 @@ function* runTurn(plans){
 /* ═════════════════════════════════════════════════════════════
    TARGETING GEOMETRY (shared by the planner, the AI and the preview)
    ═════════════════════════════════════════════════════════════ */
-function weaponTgt(u,xray){const W=WEAPONS[u.weapon];if(W.tgt==='line'&&xray)return 'ray';return W.tgt;}
+function weaponTgt(u,xray){const W=WEAPONS[u.weapon];if(xrTgt(W)&&xray)return 'ray';return W.tgt;}
 /* cells a unit standing at (ox,oy) may select */
 function targetOptions(ox,oy,tgt,range,forSide){
   const out=[];
@@ -1516,9 +1580,9 @@ function targetOptions(ox,oy,tgt,range,forSide){
     case 'ray':   // wall cells are selectable too: the shot goes through
       for(const d of DIR8){for(let s=1;s<=Math.min(range,N);s++){const x=ox+d[0]*s,y=oy+d[1]*s;if(!inB(x,y))break;out.push({x,y});}}break;
     case 'throw':for(let y=0;y<N;y++)for(let x=0;x<N;x++){const m=Math.abs(x-ox)+Math.abs(y-oy);if(m>0&&m<=range&&isFloor(x,y))out.push({x,y});}break;
-    case 'lob':for(let y=0;y<N;y++)for(let x=0;x<N;x++){const m=Math.abs(x-ox)+Math.abs(y-oy);if(m>=2&&m<=range&&isFloor(x,y))out.push({x,y});}break;
-    case 'square':for(let y=0;y<N;y++)for(let x=0;x<N;x++){const c=Math.max(Math.abs(x-ox),Math.abs(y-oy));if(c>0&&c<=range&&isFloor(x,y)&&!unitAt(x,y,forSide))out.push({x,y});}break;
-    case 'hook':for(const d of DIR8){for(let s=1;s<N;s++){const x=ox+d[0]*s,y=oy+d[1]*s;if(!isFloor(x,y))break;out.push({x,y});if(unitAt(x,y,forSide))break;}}break;
+    case 'lob':case 'lob3':{const mn=tgt==='lob3'?3:2;for(let y=0;y<N;y++)for(let x=0;x<N;x++){const m=Math.abs(x-ox)+Math.abs(y-oy);if(m>=mn&&m<=range&&isFloor(x,y))out.push({x,y});}break;}
+    case 'square':for(let y=0;y<N;y++)for(let x=0;x<N;x++){const c=Math.max(Math.abs(x-ox),Math.abs(y-oy));if(c>0&&c<=range&&isFloor(x,y)&&!seenAt(x,y,forSide))out.push({x,y});}break;
+    case 'hook':for(const d of DIR8){for(let s=1;s<N;s++){const x=ox+d[0]*s,y=oy+d[1]*s;if(!isFloor(x,y))break;out.push({x,y});if(seenAt(x,y,forSide))break;}}break;
     case 'swap':for(let y=0;y<N;y++)for(let x=0;x<N;x++){const c=Math.max(Math.abs(x-ox),Math.abs(y-oy));if(c>0&&c<=range)out.push({x,y});}break;
   }
   return out;
@@ -1537,20 +1601,21 @@ function previewGeom(kind,key,ox,oy,tx,ty,xray){
       case 'pile':g.main=[{x:tx,y:ty}];for(let s=1;s<=2;s++){const x=tx+dx*s,y=ty+dy*s;if(!inB(x,y))break;g.push.push({x,y});}break;
       case 'dash':{const dist=Math.max(Math.abs(rx),Math.abs(ry));for(let s=1;s<=dist;s++){const x=ox+dx*s,y=oy+dy*s;if(!isFloor(x,y))break;g.main.push({x,y});}break;}
       case 'spike':g.main=[{x:tx,y:ty}];g.sub=box9(tx,ty);break;
-      case 'cluster':g.main=[{x:tx,y:ty}];g.sub=ring8(tx,ty);break;
+      case 'cluster':g.main=[{x:tx,y:ty}];g.sub=crossCells(tx,ty);break;
+      case 'howitzer':g.main=howCells(ox,oy,tx,ty);break;
       case 'mortar':g.main=[{x:tx,y:ty}];g.sub=ring8(tx,ty);break;
       case 'shock':g.main=[{x:tx,y:ty}];break;
-      case 'scatter':{const c1={x:ox+dx,y:oy+dy};g.main=[c1];if(isFloor(c1.x,c1.y))for(const j of [-1,0,1]){const d=DIR8[(k+j+8)%8],x=c1.x+d[0],y=c1.y+d[1];if(inB(x,y))g.sub.push({x,y});}break;}
-      case 'flame':{let x=ox+dx,y=oy+dy;for(let s=0;s<W.range&&isFloor(x,y);s++){g.main.push({x,y});x+=dx;y+=dy;}break;}
+      case 'scatter':{const c1={x:ox+dx,y:oy+dy};g.main=[c1];if(isFloor(c1.x,c1.y)||(xray&&inB(c1.x,c1.y)))for(const j of [-1,0,1]){const d=DIR8[(k+j+8)%8],x=c1.x+d[0],y=c1.y+d[1];if(inB(x,y))g.sub.push({x,y});}break;}
+      case 'flame':{let x=ox+dx,y=oy+dy;for(let s=0;s<W.range&&inB(x,y);s++){if(isFloor(x,y))g.main.push({x,y});else if(!xray)break;x+=dx;y+=dy;}break;}
     }
   }else if(kind==='ult'){
     if(key==='GIGA_CANNON'){let x=ox+dx,y=oy+dy;while(inB(x,y)){g.main.push({x,y});x+=dx;y+=dy;}}
-    else if(key==='ORBITAL_STRIKE'){g.main=[{x:tx,y:ty}];g.sub=box9(tx,ty);}
-    else if(key==='PHANTOM_MIRAGE')g.main=[{x:tx,y:ty}];
+    else if(key==='ORBITAL_STRIKE'){g.main=[{x:tx,y:ty}];g.sub=box25(tx,ty);}
+    else if(key==='PHANTOM_MIRAGE'){g.main=[{x:tx,y:ty}];g.sub=[{x:ox,y:oy}];}
   }else if(kind==='sk'){
     switch(key){
       case 'BLINK':case 'WALL_GEN':case 'MINE':g.main=[{x:tx,y:ty}];break;
-      case 'HOOK':{let x=ox+dx,y=oy+dy;while(isFloor(x,y)){g.main.push({x,y});if(unitAt(x,y,0))break;x+=dx;y+=dy;}break;}
+      case 'HOOK':{let x=ox+dx,y=oy+dy;while(isFloor(x,y)){g.main.push({x,y});if(seenAt(x,y,0))break;x+=dx;y+=dy;}break;}
       case 'SWAP':g.sub=targetOptions(ox,oy,'swap',5,0);break;
       case 'SMOKE':g.main=[{x:tx,y:ty}];g.sub=box9(tx,ty);break;
     }
@@ -1579,7 +1644,8 @@ function aiPredict(me,origin,rel,op,xray){
     case 'pile':return (tx===op.x&&ty===op.y)?W.dmg+8:0;
     case 'dash':{const dist=Math.max(Math.abs(rel.x),Math.abs(rel.y));for(let s=1;s<=dist;s++){const x=origin.x+dx*s,y=origin.y+dy*s;if(!isFloor(x,y))return 0;if(x===op.x&&y===op.y)return W.dmg;}return 0;}
     case 'spike':{const c=Math.max(Math.abs(tx-op.x),Math.abs(ty-op.y));return c===0?22:c===1?16:0;}
-    case 'cluster':{const c=Math.max(Math.abs(tx-op.x),Math.abs(ty-op.y));return c===0?20:c===1?9:0;}
+    case 'cluster':{const m=Math.abs(tx-op.x)+Math.abs(ty-op.y);return m===0?W.dmg:m===1?CLUSTER_RING:0;}
+    case 'howitzer':return howCells(origin.x,origin.y,tx,ty).some(c=>c.x===op.x&&c.y===op.y)?W.dmg*.7:0;
     case 'mortar':{const c=Math.max(Math.abs(tx-op.x),Math.abs(ty-op.y));return c===0?24:c===1?10:0;}
     case 'shock':return (tx===op.x&&ty===op.y)?W.dmg+14:0;
     case 'scatter':{const c1={x:origin.x+dx,y:origin.y+dy};if(c1.x===op.x&&c1.y===op.y)return W.dmg;if(!isFloor(c1.x,c1.y))return 0;
@@ -1606,11 +1672,11 @@ function aiFindAttack(me,op,start,ap,xray,mvLeft){
   const W=WEAPONS[me.weapon];const maxMoves=Math.min(ap-W.ap,mvLeft==null?N*N:mvLeft);if(maxMoves<0)return null;
   const bf=bfsFrom(start,(x,y)=>x===op.x&&y===op.y,maxMoves);
   let best=null;
-  const frac={mortar:1,spike:1}[W.kind];
+  const frac={mortar:1,spike:1,howitzer:.4}[W.kind];
   const tgtOp=frac!=null&&Math.random()<.75?aiGuessOp(me,op,frac):op;
   for(const n of bf.order){
     const d=bf.dist[n.y][n.x];
-    const tg=W.tgt==='line'&&xray?'ray':W.tgt;
+    const tg=xrTgt(W)&&xray?'ray':W.tgt;
     for(const c of targetOptions(n.x,n.y,tg,W.range,me.side)){
       const rel={x:c.x-n.x,y:c.y-n.y};
       const v=aiPredict(me,n,rel,tgtOp,xray);
@@ -1629,7 +1695,7 @@ function aiFindAttack(me,op,start,ap,xray,mvLeft){
 function aiView(side,opt){
   const real=S.units[1-side];let pos=null;
   if(opt&&opt.opPos)pos=opt.opPos;
-  else if(real.mirage&&real.mirage.decoys.length){const c=[{x:real.x,y:real.y},...real.mirage.decoys];pos=c[Math.floor(Math.random()*c.length)];}
+  else if(real.mirage)pos={x:real.mirage.x,y:real.mirage.y};   // a hidden body is believed to be its decoy
   if(!pos)return real;
   pos={x:clamp(pos.x,0,N-1),y:clamp(pos.y,0,N-1)};
   const v=Object.assign({},real,{x:pos.x,y:pos.y});return v;
@@ -1667,6 +1733,7 @@ function simTurnScore(side,myPlan,opPlan){
   finally{S=save;ev=saveEv;}
 }
 function aiPlanHard(side,opt){
+  if(S.units[1-side].mirage&&!opt.knownOp)return aiPlanCore(side,{...opt,level:'HARD'});   // no peeking at a hidden body
   const cands=[];for(let i=0;i<9;i++)cands.push(aiPlanCore(side,{...opt,level:'HARD'}));
   const opps=opt.knownOp?[opt.knownOp]:Array.from({length:6},()=>aiPlanCore(1-side,{level:'NORMAL'}));
   let best=cands[0],bs=-1e9;
@@ -1690,13 +1757,19 @@ function aiPlanCore(side,opt){
   opt=opt||{};
   const me=S.units[side],op=aiView(side,opt);if(!me||!op||!me.alive||!op.alive)return [];
   const W=WEAPONS[me.weapon];const plan=[];let ap=me.ap,mvl=me.mv;let pos={x:me.x,y:me.y};let xray=false;
-  const silenced=S.turn===me.silencedTurn;
-  const has=k=>!silenced&&me.skills.some(s=>s.key===k&&s.cd===0)&&!plan.some(a=>a.type==='skill'&&a.key===k);
+  const silenced=S.turn===me.silencedTurn;let fortNow=me.fort;
+  const has=k=>!silenced&&me.skills.some(s=>s.key===k&&s.cd===0)&&!plan.some(a=>a.type==='skill'&&a.key===k)&&!(fortNow&&['BLINK','REWIND','SWAP'].includes(k));
   const slot=k=>me.skills.findIndex(s=>s.key===k);
   const use=(k,rx=0,ry=0)=>{const c=SKILLS[k].ap||0;if(c>ap)return false;plan.push({type:'skill',slot:slot(k),key:k,rx,ry});ap-=c;return true;};
   const R=Math.random;
   const d0=cheb(pos,op);
   if(me.lockMv>=S.turn)mvl=0;
+  // MIRAGE decoy: 0 BIT, up to 3 steps, wanders near the rival to draw fire
+  const decoyPlan=(from,avoid)=>{
+    const bf=bfsFrom(from,(x,y)=>(x===op.x&&y===op.y)||(avoid&&x===avoid.x&&y===avoid.y),DECOY_STEPS);
+    let goal=null,gs=99;for(const n of bf.order){const dd=bf.dist[n.y][n.x];if(dd<1)continue;const sc=Math.abs(cheb(n,op)-2)+R()*1.6;if(sc<gs){gs=sc;goal=n;}}
+    if(goal&&R()<.85)for(const d of pathDirs(bf.par,goal))plan.push({type:'dmove',dx:d[0],dy:d[1]});};
+  if(me.mirage)decoyPlan({x:me.mirage.x,y:me.mirage.y},pos);
   if(!opt.noUlt&&!me.ultUsed&&me.gauge>=GAUGE_MAX){
     const U=me.ult,pushU=(rx=0,ry=0)=>plan.push({type:'ult',key:U,rx,ry});
     if(U==='COUNTER_RUSH'&&d0<=4)pushU();
@@ -1710,7 +1783,7 @@ function aiPlanCore(side,opt){
       let bc=null,bd=-1;
       for(const c of targetOptions(pos.x,pos.y,'square',3,side)){const d=cheb(c,op)+(d0>3?0:R());if(d>=2&&d<=4&&d>bd){bd=d;bc=c;}}
       if(!bc)for(const c of targetOptions(pos.x,pos.y,'square',3,side)){const d=cheb(c,op);if(d>bd){bd=d;bc=c;}}
-      if(bc){pushU(bc.x-pos.x,bc.y-pos.y);return plan;}
+      if(bc){pushU(bc.x-pos.x,bc.y-pos.y);decoyPlan({x:pos.x,y:pos.y},bc);pos={x:bc.x,y:bc.y};fortNow=false;}
     }
   }
   if(has('REPAIR')&&me.hp<=me.maxHp*.55)use('REPAIR');
@@ -1718,11 +1791,11 @@ function aiPlanCore(side,opt){
   if(has('JAMMER')&&R()<.55)use('JAMMER');
   if(has('SILENCE')&&R()<.4)use('SILENCE');
   const OW=WEAPONS[op.weapon];
-  if(has('REFLECT')&&OW.ranged&&d0<=6&&R()<.55)use('REFLECT');
+  if(has('REFLECT')&&d0<=(OW.ranged||OW.range>=3?6:3)&&R()<.55)use('REFLECT');
   if(has('ANCHOR')&&d0<=3&&(['pile','knuckle','shock','dash'].includes(OW.kind)||op.revealed.includes('HOOK')||op.revealed.includes('SWAP'))&&R()<.6)use('ANCHOR');
-  if(me.fort){if(aiFindAttack(me,op,pos,ap,false,0)&&R()<.75)mvl=0;else ap=Math.max(0,ap-(FORT_MOVE-1));}
-  else if(has('FORTIFY')&&aiFindAttack(me,op,pos,ap,false,0)&&R()<.55){use('FORTIFY');mvl=0;}
-  if(has('PARRY')&&d0<=2&&!OW.ranged&&!['spike','cluster','mortar'].includes(OW.kind)&&R()<.7)use('PARRY');
+  if(fortNow){if(aiFindAttack(me,op,pos,ap,false,0)&&R()<.75)mvl=0;else if(ap>=1){plan.push({type:'unfort'});ap-=1;fortNow=false;}else mvl=0;}
+  else if(has('FORTIFY')&&W.kind!=='dash'&&aiFindAttack(me,op,pos,ap-1,false,0)&&R()<.55){if(use('FORTIFY')){mvl=0;fortNow=true;}}
+  if(has('PARRY')&&d0<=2&&R()<.65)use('PARRY');
   if(has('BACKSTEP')&&d0<=4&&R()<.55)use('BACKSTEP');
   if(has('SMOKE')&&OW.ranged&&d0>=2&&R()<.6){const k=dirIndex(op.x-pos.x,op.y-pos.y),[sx,sy]=DIR8[k];if(inB(pos.x+sx,pos.y+sy))use('SMOKE',sx,sy);}
   if(has('OVERCLOCK')&&ap-1>=W.ap&&aiFindAttack(me,op,pos,ap-1,false,mvl)&&R()<.8)use('OVERCLOCK');
@@ -1742,12 +1815,12 @@ function aiPlanCore(side,opt){
   }
   for(let loop=0;loop<5&&ap>0;loop++){
     let best=ap>=W.ap?aiFindAttack(me,op,pos,ap,xray,mvl):null;
-    if(!best&&!xray&&W.tgt==='line'&&has('X_RAY')&&ap>=W.ap){const b2=aiFindAttack(me,op,pos,ap,true,mvl);if(b2){use('X_RAY');xray=true;best=b2;}}
+    if(!best&&!xray&&xrTgt(W)&&has('X_RAY')&&ap>=W.ap+1){const b2=aiFindAttack(me,op,pos,ap,true,mvl);if(b2){use('X_RAY');xray=true;best=b2;}}
     if(best){
       for(const m of best.moves)plan.push({type:'move',dx:m[0],dy:m[1]});
       ap-=best.moves.length;mvl-=best.moves.length;pos=best.pos;
       plan.push({type:'attack',rx:best.rel.x,ry:best.rel.y});ap-=W.ap;pos=best.after;attacks++;
-      if(((W.kind==='spike'||W.kind==='cluster'||W.kind==='mortar')&&attacks>=2)||attacks>=3)break;
+      if(((W.kind==='spike'||W.kind==='howitzer'||W.kind==='mortar')&&attacks>=2)||attacks>=3)break;
       continue;
     }
     if(attacks===0&&loop===0){
@@ -1757,7 +1830,7 @@ function aiPlanCore(side,opt){
         for(const c of targetOptions(pos.x,pos.y,'square',2,side)){const d=bf.dist[c.y][c.x];if(d>0&&d<bd){bd=d;bc=c;}}
         if(bc&&bd<cur-1){use('BLINK',bc.x-pos.x,bc.y-pos.y);pos={x:bc.x,y:bc.y};continue;}
       }
-      if(has('CHARGE')&&ap>=2&&d0>=4&&R()<.5)use('CHARGE');
+      if(has('CHARGE')&&ap>=3&&d0>=4&&R()<.5)use('CHARGE');
     }
     // approach
     const bf=bfsFrom(pos,null,null);
@@ -1770,7 +1843,7 @@ function aiPlanCore(side,opt){
     ap-=okMoves;mvl-=okMoves;pos={x:px,y:py};
     if(ap<W.ap||(!okMoves&&mvl<1))break;
   }
-  if(attacks>0&&has('REWIND')&&(pos.x!==me.x||pos.y!==me.y)&&R()<.45){use('REWIND');pos={x:me.x,y:me.y};}
+  if(attacks>0&&has('REWIND')&&(pos.x!==me.x||pos.y!==me.y)&&R()<.45){if(use('REWIND'))pos={x:me.x,y:me.y};}
   if(has('SWAP')&&cheb(pos,op)<=5&&R()<.18)use('SWAP');
   if(has('MINE')&&cheb(pos,op)<=5&&R()<.6){
     const bf=bfsFrom({x:op.x,y:op.y},null,null);let bc=null,bd=99;
@@ -1794,7 +1867,7 @@ function aiPlanCore(side,opt){
 /* ═════════════════════════════════════════════════════════════
    PRESENTER — visual state
    ═════════════════════════════════════════════════════════════ */
-const V={u:[null,null],fx:[],parts:[],floats:[],decals:[],shake:0,banner:null,cursor:0,hp:[0,0],hpG:[0,0],sflash:null,hitstop:0};
+const V={u:[null,null],dc:[null,null],fx:[],parts:[],floats:[],decals:[],shake:0,banner:null,cursor:0,hp:[0,0],hpG:[0,0],sflash:null,hitstop:0};
 const UI={screen:'setup',mode:null,cells:[],sel:null,hover:null,plan:[],busy:false,stepIdx:-1,execPlan:null,touch:false,lastToast:0};
 let CFG={frame:'ASSAULT',weapon:'NEON_BLADE',skills:['BLINK','SHIELD'],ult:'COUNTER_RUSH'};
 let RIVAL=null;
@@ -1802,8 +1875,15 @@ let board,bctx,C=40,BW=320,DPR=1,TOP=0;   // TOP: headroom strip above row 0 so 
 
 /* lead time a visual event reserves before the next one plays */
 const LEAD={action:130,ult:1000,fx:{giga:320,orbital:460,slash:110,tracer:130,knuckle:120,beam:250,wave:280,pile:120,dash:40,throw:330,impact:40,cluster:330,void:440,chain:280,shield:60,repair:80,jam:90,silence:90,charge:90,xray:160,swap:200,scatter:120,flame:220,shock:150,mortarLaunch:260,mortar:430,reflect:80,anchor:80,overclock:90}};
+const HIDE_EV=new Set(['move','teleport','bump','dashMove','backstep','knock']);
+const SELF_FX=new Set(['shield','repair','charge','xray','reflect','anchor','overclock']);
 ev=function(type,d){
   if(type==='delay'){V.cursor=Math.max(V.cursor,now())+d.ms/SPEED;return;}
+  if(d&&d.side!=null&&S&&S.units[d.side]&&S.units[d.side].mirage&&!decoyOwnView(d.side)){
+    const m=S.units[d.side].mirage;
+    if(HIDE_EV.has(type))return;
+    if(type==='fx'&&SELF_FX.has(d.type))d=Object.assign({},d,{x:m.x,y:m.y});
+  }
   const at=Math.max(V.cursor,now());const wait=at-now();
   if(wait<=4)handleEvent(type,d);else setTimeout(()=>handleEvent(type,d),wait);
   let lead=0;
@@ -1813,11 +1893,13 @@ ev=function(type,d){
 function settle(tail){return new Promise(r=>setTimeout(r,Math.max(0,V.cursor-now())+tail/SPEED));}
 
 function initVisuals(){
-  V.fx=[];V.parts=[];V.floats=[];V.decals=[];V.shake=0;V.banner=null;V.sflash=null;V.hitstop=0;V.cursor=now();
+  V.fx=[];V.parts=[];V.floats=[];V.decals=[];V.shake=0;V.banner=null;V.sflash=null;V.hitstop=0;V.cursor=now();V.dc=[null,null];
   for(let s=0;s<2;s++){const u=S.units[s];V.u[s]={x:u.x,y:u.y,tx:u.x,ty:u.y,ox:0,oy:0,flash:0,glitch:0,flip:s===0?1:-1,sq:0,sqk:0,spd:13,trail:[]};V.hp[s]=u.hp;V.hpG[s]=u.hp;
     addFx({kind:'spawnIn',x:u.x,y:u.y,color:TEAM[s],dur:1100,delay:s*260});}
 }
-function syncVisualPositions(){for(let s=0;s<2;s++){const u=S.units[s],vu=V.u[s];if(!u||!vu)continue;vu.tx=u.x;vu.ty=u.y;V.hp[s]=u.hp;}}
+function visCell(s){const u=S.units[s];if(u&&u.mirage&&!decoyOwnView(s))return {x:u.mirage.x,y:u.mirage.y};return {x:u.x,y:u.y};}
+function syncVisualPositions(){for(let s=0;s<2;s++){const u=S.units[s],vu=V.u[s];if(!u||!vu)continue;const c=visCell(s);vu.tx=c.x;vu.ty=c.y;V.hp[s]=u.hp;
+  if(u.mirage&&decoyOwnView(s)){if(!V.dc[s])V.dc[s]={x:u.mirage.x,y:u.mirage.y,tx:u.mirage.x,ty:u.mirage.y};else{V.dc[s].tx=u.mirage.x;V.dc[s].ty=u.mirage.y;}}else if(!u.mirage)V.dc[s]=null;}}
 function cxOf(gx){return (gx+.5)*C;}
 function unitPx(s){const vu=V.u[s];if(!vu)return {x:0,y:0};return {x:(vu.x+.5+vu.ox)*C,y:(vu.y+.5+vu.oy)*C};}
 function tagName(s){if(UI.replay&&S&&S.units[s])return '<span class="n'+s+'">'+esc(S.units[s].name)+'</span>';return '<span class="n'+s+'">'+(s===0?'YOU':(NET.on&&NET.rname?esc(NET.rname):'RIVAL'))+'</span>';}
@@ -1850,9 +1932,10 @@ function cutinShow(cls,cc,frame,weapon,side,sub,name,note,ms){
   el.className='show'+(cls?' '+cls:'');
   clearTimeout(UI._ci);UI._ci=setTimeout(()=>{el.className='';},ms/SPEED);
 }
-function showCutin(side,key,reveal){
+const MIRAGE_WHY={attack:'奇襲 — 姿を現してダメージ×2',decoy:'分身を撃ち抜かれた — 本体出現',hit:'本体に被弾 — 姿を現した',touch:'分身に触れられた — 本体出現',skill:'姿を現した',time:'時間切れ — 本体出現'};
+function showCutin(side,key,why){
   const u=S.units[side],d=ULTS[key];
-  cutinShow('',side?'#c0176a':'#0aa6c2',u.frame,u.weapon,side,(reveal?'MIRAGE BREAK':u.frame)+' // ULTIMATE',d.name,reveal?'本体出現 — 最初の攻撃×1.5':'',1100);
+  cutinShow('',side?'#c0176a':'#0aa6c2',u.frame,u.weapon,side,(why?'MIRAGE BREAK':u.frame)+' // ULTIMATE',d.name,why?(MIRAGE_WHY[why]||''):'',1100);
   V.sflash={color:'#ffffff',a:.18,t0:now(),dur:200};V.shake=Math.max(V.shake,8);
 }
 function showHackCutin(hackerSide){
@@ -1922,12 +2005,12 @@ function handleEvent(type,d){
     case 'fail':footLabel(d.side,d.text,'#8a9ab8');log(tagName(d.side)+' '+d.text,'p'+d.side);break;
     case 'status':floatNum(d.side,d.text,'#ff6adf',C*.26);refreshHUD();break;
     case 'resoBoost':floatNum(d.side,'RESONATE!','#c77dff',C*.3);break;
-    case 'spikeSet':log('VOID SPIKE 設置 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次ターン開始時に起爆</span>','p'+d.side);break;
-    case 'clusterArm':log('CLUSTER B. 着弾 — <span class="w">次のアクション後に拡散</span>','p'+(S.clusters.length?S.clusters[S.clusters.length-1].owner:0));break;
+    case 'spikeSet':log('SPIKE 設置 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次ターン開始時に起爆</span>','p'+d.side);break;
+    case 'shellMark':log('HOWITZER 砲撃 — <span class="w">次の手の後に着弾（3マス列）</span>','p'+d.side);break;
     case 'zoneHit':addFx({kind:'ring',x:d.x,y:d.y,color:'#b04dff',dur:420,r0:.1,r1:.55});log(tagName(d.side)+' VOIDエリアを踏んだ','p'+d.side);break;
     case 'zoneEnd':addFx({kind:'cells',cells:box9(d.x,d.y),color:'#b04dff',dur:520,style:'fade'});log('VOID エリア消滅','sys');break;
     case 'reflect':{const p=unitPx(d.side);addFx({kind:'reflectHit',px:p.x,py:p.y,dur:560});sparks(p.x,p.y,'#bff8ff',18,5,{type:'spark',life:16});V.hitstop=now()+60/SPEED;floatNum(d.side,'REFLECT!','#7af0ff',C*.34);
-      log(tagName(d.side)+' <span class="h">REFLECT — 射撃を跳ね返した！</span>','p'+d.side);break;}
+      log(tagName(d.side)+' <span class="h">REFLECT — 半分を受け流して'+(d.amount||0)+'を跳ね返した！</span>','p'+d.side);break;}
     case 'shieldEnd':log(tagName(d.side)+' SHIELD 消失','p'+d.side);refreshHUD();break;
     case 'minePlace':if(d.side===0){addFx({kind:'mineSet',x:d.x,y:d.y,dur:620});log('MINE 設置 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">相手には見えない</span>','p0');}
       else log(tagName(1)+' が<span class="w">何かを仕掛けた…</span>','p1');break;
@@ -1937,37 +2020,50 @@ function handleEvent(type,d){
     case 'burnSet':log('INFERNO — <span class="w">'+d.cells.length+'マスが炎上（次ターン終了まで）</span>','p'+d.side);break;
     case 'burnHit':addFx({kind:'ring',x:d.x,y:d.y,color:'#ff7a1a',dur:420,r0:.1,r1:.55});embers(cxOf(d.x),cxOf(d.y),'#ff7a1a',6,.5);log(tagName(d.side)+' 炎に焼かれた','p'+d.side);break;
     case 'burnEnd':addFx({kind:'cells',cells:[{x:d.x,y:d.y}],color:'#ff7a1a',dur:420,style:'fade'});break;
-    case 'mortarMark':log('ARC MORTAR 砲撃予約 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">全行動の後に着弾</span>','p'+d.side);break;
+    case 'mortarMark':log('MORTAR 砲撃予約 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">全行動の後に着弾</span>','p'+d.side);break;
     case 'wallGen':addFx({kind:'wallgen',x:d.x,y:d.y,dur:620});log('WALL GEN — 壁を生成 ('+(d.x+1)+','+(d.y+1)+')');break;
     case 'wallHit':addFx({kind:'ring',x:d.x,y:d.y,color:'#2dffa8',dur:320,r0:.2,r1:.55});sparks(cxOf(d.x),cxOf(d.y),'#2dffa8',8,3,{type:'spark',life:14});break;
     case 'ult':{
-      showCutin(d.side,d.key,d.reveal);
+      showCutin(d.side,d.key);
       const nm=ULTS[d.key].name;
-      if(d.reveal){if(vu){vu.glitch=2;}for(const c of d.decoys||[]){smoke(cxOf(c.x),cxOf(c.y),8,'#4a3a6a',{life:40,a:.6});addFx({kind:'blink',x:c.x,y:c.y,out:true,color:TEAM[d.side],dur:420});}
-        log(tagName(d.side)+' <span class="w">'+nm+' — 分身が消え、本体が出現！</span>（最初の攻撃×1.5）','p'+d.side);}
-      else log(tagName(d.side)+' ▸ <span class="w">ULTIMATE: '+nm+'</span>','p'+d.side);
+      log(tagName(d.side)+' ▸ <span class="w">ULTIMATE: '+nm+'</span>','p'+d.side);
       refreshHUD();break;}
     case 'ultReady':floatNum(d.side,'ULT READY',ULT_COLOR,C*.32);log(tagName(d.side)+' <span class="w">ULTゲージ満タン</span>','p'+d.side);refreshHUD();refreshButtons();break;
     case 'ironWall':{const p=unitPx(d.side);sparks(p.x,p.y,ULT_COLOR,20,5,{type:'spark',life:16});addFx({kind:'reflectHit',px:p.x,py:p.y,dur:560});V.hitstop=now()+70/SPEED;floatNum(d.side,'IRON WALL!',ULT_COLOR,C*.34);
       log(tagName(d.side)+' <span class="h">IRON WALL — '+d.amount+'ダメージを跳ね返した！</span>','p'+d.side);break;}
     case 'mirage':{
-      for(const c of [d.from,d.to,...d.decoys]){smoke(cxOf(c.x),cxOf(c.y),10,'#4a3a6a',{life:46,a:.7});embers(cxOf(c.x),cxOf(c.y),'#c77dff',5,.5);}
-      if(vu){vu.x=vu.tx=d.to.x;vu.y=vu.ty=d.to.y;vu.trail=[];}
-      V.sflash={color:'#c77dff',a:.12,t0:now(),dur:220};
-      log(d.side===0||UI.replay?tagName(d.side)+' <span class="w">PHANTOM MIRAGE — 分身を展開</span>（次のターン開始時に出現）':tagName(d.side)+' が煙に消えた… <span class="w">機影が3つに増えた</span>','p'+d.side);refreshHUD();break;}
-    case 'hauntSet':floatNum(d.side,'HAUNTED','#c77dff',C*.32);log(tagName(d.side)+' に <span class="w">STATIC HAUNT</span> — 2ターン、開始位置の周囲1マスに留まると'+HAUNT_DMG+'ダメージ','p'+d.side);refreshHUD();break;
-    case 'hauntHit':addFx({kind:'ring',x:S.units[d.side].x,y:S.units[d.side].y,color:'#c77dff',dur:520,r0:.1,r1:.9});log(tagName(d.side)+' <span class="d">HAUNT 発動！</span>','p'+d.side);break;
-    case 'hauntDodge':footLabel(d.side,'HAUNT AVOIDED','#c77dff');log(tagName(d.side)+' HAUNT を振り切った','p'+d.side);break;
+      const own=decoyOwnView(d.side);
+      V.dc[d.side]={x:d.from.x,y:d.from.y,tx:d.from.x,ty:d.from.y};
+      if(own){
+        smoke(cxOf(d.from.x),cxOf(d.from.y),10,'#4a3a6a',{life:46,a:.7});embers(cxOf(d.from.x),cxOf(d.from.y),'#c77dff',5,.5);
+        if(vu){addFx({kind:'blink',x:d.to.x,y:d.to.y,out:false,color:'#c77dff',dur:420});vu.x=vu.tx=d.to.x;vu.y=vu.ty=d.to.y;vu.trail=[];}
+        V.sflash={color:'#c77dff',a:.12,t0:now(),dur:220};
+        log(tagName(d.side)+' <span class="w">MIRAGE — 分身を残して姿を消した</span>（分身は0BITで動かせる）','p'+d.side);
+      }
+      refreshHUD();break;}
+    case 'dmove':{
+      if(!decoyOwnView(d.side)){handleEvent('move',d);break;}
+      const dc=V.dc[d.side];if(dc){dc.tx=d.to.x;dc.ty=d.to.y;}
+      break;}
+    case 'mirageBreak':{
+      const own=decoyOwnView(d.side);V.dc[d.side]=null;
+      smoke(cxOf(d.decoy.x),cxOf(d.decoy.y),10,'#4a3a6a',{life:44,a:.7});addFx({kind:'blink',x:d.decoy.x,y:d.decoy.y,out:true,color:'#c77dff',dur:460});
+      if(vu){if(!own){vu.x=vu.tx=d.body.x;vu.y=vu.ty=d.body.y;vu.trail=[];}vu.glitch=2;addFx({kind:'blink',x:d.body.x,y:d.body.y,out:false,color:TEAM[d.side],dur:460});}
+      showCutin(d.side,'PHANTOM_MIRAGE',d.why);
+      log(tagName(d.side)+' <span class="w">MIRAGE BREAK — '+(MIRAGE_WHY[d.why]||'本体出現')+'</span>','p'+d.side);refreshHUD();break;}
+    case 'hauntSet':floatNum(d.side,'HUNTED','#c77dff',C*.32);log(tagName(d.side)+' に <span class="w">HUNT</span> — 2ターン、開始位置の周囲1マスに留まると'+HAUNT_DMG+'ダメージ','p'+d.side);refreshHUD();break;
+    case 'hauntHit':addFx({kind:'ring',x:S.units[d.side].x,y:S.units[d.side].y,color:'#c77dff',dur:520,r0:.1,r1:.9});log(tagName(d.side)+' <span class="d">HUNT 発動！</span>','p'+d.side);break;
+    case 'hauntDodge':footLabel(d.side,'HUNT AVOIDED','#c77dff');log(tagName(d.side)+' HUNT を振り切った','p'+d.side);break;
     case 'counterHit':{const t=S.units[d.to];addFx({kind:'burst',x:t.x,y:t.y,color:'#ff6a1a',dur:620});addFx({kind:'ring',x:t.x,y:t.y,color:'#ff6a1a',dur:520,r0:.1,r1:.9});V.shake=Math.max(V.shake,14);
-      log(tagName(d.side)+' <span class="w">COUNTER RUSH — 受けた痛みを'+d.amount+'にして返す！</span>','p'+d.side);break;}
-    case 'orbitalMark':banner('ORBITAL LOCK','NEXT TURN · 3×3 · '+ORBITAL_DMG,'#ff3355',900,awayY(d.y));log('ORBITAL STRIKE 照準 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次のターンの全行動の後に着弾</span>','p'+d.side);break;
+      log(tagName(d.side)+' <span class="w">COUNTER — 受けた痛みを'+d.amount+'にして返す！</span>','p'+d.side);break;}
+    case 'orbitalMark':banner('STRIKE LOCK','NEXT TURN · 5×5 · '+ORBITAL_DMG,'#ff3355',900,awayY(d.y));log('STRIKE 照準 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次のターンの全行動の後に着弾</span>','p'+d.side);break;
     case 'smokeSet':addFx({kind:'cells',cells:box9(d.x,d.y),color:'#c8d2e6',dur:600});smoke(cxOf(d.x),cxOf(d.y),14,'#8a96b0',{life:60,a:.6});log(tagName(d.side)+' <span class="w">SMOKE</span> — 煙の中には射撃が届かない（次ターン終了まで）','p'+d.side);break;
     case 'smokeEnd':log('SMOKE が晴れた','sys');break;
     case 'smokeBlock':floatNum(d.side,'SMOKE!','#c8d2e6',C*.32);log(tagName(d.side)+' 煙に隠れて射撃を防いだ','p'+d.side);break;
     case 'parry':{const p=unitPx(d.side);sparks(p.x,p.y,'#ffffff',22,6,{type:'spark',life:16});V.hitstop=now()+110/SPEED;V.shake=Math.max(V.shake,10);floatNum(d.side,'PARRY!!','#ffffff',C*.4,{big:true});
-      log(tagName(d.side)+' <span class="h">PARRY — 近接攻撃を弾いた！</span> '+tagName(d.to)+' はスタン','p'+d.side);break;}
+      log(tagName(d.side)+' <span class="h">PARRY — 至近距離の攻撃を弾いた！</span> '+tagName(d.to)+' はスタン','p'+d.side);break;}
     case 'backstep':if(vu){vu.tx=d.to.x;vu.ty=d.to.y;vu.spd=24;}footLabel(d.side,'DODGE','#7af0ff');log(tagName(d.side)+' <span class="h">BACKSTEP — 1マス下がって回避！</span>','p'+d.side);break;
-    case 'crit':floatNum(d.side,'CRITICAL ×1.5',ULT_COLOR,C*.3,{big:true});break;
+    case 'crit':floatNum(d.side,'AMBUSH ×2',ULT_COLOR,C*.3,{big:true});break;
     case 'hackLog':log(tagName(d.side)+' <span class="w">SYSTEM HACK</span> — 読み切った行動を実行','p'+d.side);break;
     case 'wallBreak':{addFx({kind:'burst',x:d.x,y:d.y,color:'#2dffa8',dur:560});sparks(cxOf(d.x),cxOf(d.y),'#2dffa8',18,4.5,{type:'spark'});debris(cxOf(d.x),cxOf(d.y),'#2dffa8',12,5);log('生成壁が破壊された');break;}
   }
@@ -1994,9 +2090,9 @@ function spawnWeaponFx(d){
       addFx({kind:'clusterFly',x:d.x,y:d.y,cells:d.cells,color:col,dur:340});
       addFx({kind:'cells',cells:d.cells,color:col,dur:640,delay:280});
       d.cells.forEach((c,i)=>{addFx({kind:'burst',x:c.x,y:c.y,color:i%2?'#ffb02a':col,dur:520,delay:280+i*30,small:true});});
-      setTimeout(()=>{V.shake=Math.max(V.shake,11);V.sflash={color:'#ff9a2a',a:.12,t0:now(),dur:200};},280/SPEED);log('CLUSTER B. <span class="d">拡散爆発</span>（周囲8マス）','sys');
+      setTimeout(()=>{V.shake=Math.max(V.shake,11);V.sflash={color:'#ff9a2a',a:.12,t0:now(),dur:200};},280/SPEED);log('CLUSTER <span class="d">十字に炸裂</span>','sys');
       break;
-    case 'void':addFx({kind:'void',x:d.x,y:d.y,color:col,dur:1100});addFx({kind:'cells',cells:d.cells,color:col,dur:720,delay:440});setTimeout(()=>{V.shake=Math.max(V.shake,13);},440/SPEED);banner('VOID DETONATION','3×3 AREA · '+VOID_BURST+' DMG','#b04dff',900,awayY(d.y));log('VOID SPIKE <span class="d">起爆</span> — 3×3に'+VOID_BURST+'ダメージ、2ターン残留','sys');break;
+    case 'void':addFx({kind:'void',x:d.x,y:d.y,color:col,dur:1100});addFx({kind:'cells',cells:d.cells,color:col,dur:720,delay:440});setTimeout(()=>{V.shake=Math.max(V.shake,13);},440/SPEED);banner('VOID DETONATION','3×3 AREA · '+VOID_BURST+' DMG','#b04dff',900,awayY(d.y));log('SPIKE <span class="d">起爆</span> — 3×3に'+VOID_BURST+'ダメージ、2ターン残留','sys');break;
     case 'chain':addFx({kind:'chain',x:d.x,y:d.y,k:d.k,path:d.path,hit:d.hit,color:col,dur:620});break;
     case 'shield':addFx({kind:'shieldUp',x:d.x,y:d.y,dur:560});break;
     case 'repair':addFx({kind:'repair',x:d.x,y:d.y,dur:760});break;
@@ -2014,7 +2110,7 @@ function spawnWeaponFx(d){
       addFx({kind:'burst',x:d.x,y:d.y,color:col,dur:640,delay:360});addFx({kind:'cells',cells:d.cells,color:col,dur:620,delay:360});
       for(const c of d.cells)if(c.x!==d.x||c.y!==d.y)addFx({kind:'burst',x:c.x,y:c.y,color:col,dur:420,delay:400+Math.random()*120,small:true});
       setTimeout(()=>{V.shake=Math.max(V.shake,15);V.sflash={color:col,a:.14,t0:now(),dur:200};},360/SPEED);
-      banner('IMPACT','ARC MORTAR · 3×3',col,800,awayY(d.y));log('ARC MORTAR <span class="d">着弾</span>','sys');break;
+      banner('IMPACT',d.label?d.label+' · 3マス列':'MORTAR · 3×3',col,800,awayY(d.y));log((d.label||'MORTAR')+' <span class="d">着弾</span>','sys');break;
     case 'reflect':addFx({kind:'reflectUp',x:d.x,y:d.y,dur:680});break;
     case 'giga':addFx({kind:'beam',x:d.x,y:d.y,k:d.k,path:d.path,color:col,dur:1000});addFx({kind:'beam',x:d.x,y:d.y,k:d.k,path:d.path,color:'#ffffff',dur:700,delay:60});
       addFx({kind:'cells',cells:d.path,color:col,dur:800,delay:200});d.path.forEach((c,i)=>addFx({kind:'burst',x:c.x,y:c.y,color:i%2?'#ffffff':col,dur:480,delay:200+i*40,small:true}));
@@ -2023,7 +2119,7 @@ function spawnWeaponFx(d){
       addFx({kind:'burst',x:d.x,y:d.y,color:col,dur:700,delay:360});addFx({kind:'cells',cells:d.cells,color:col,dur:700,delay:360});
       for(const c of d.cells)addFx({kind:'burst',x:c.x,y:c.y,color:col,dur:480,delay:380+Math.random()*140,small:c.x!==d.x||c.y!==d.y});
       setTimeout(()=>{V.shake=Math.max(V.shake,20);V.sflash={color:'#ffffff',a:.28,t0:now(),dur:260};},360/SPEED);
-      banner('ORBITAL STRIKE','3×3 · '+ORBITAL_DMG+' DMG',col,900,awayY(d.y));log('ORBITAL STRIKE <span class="d">着弾</span>','sys');break;
+      banner('STRIKE','5×5 · '+ORBITAL_DMG+' DMG',col,900,awayY(d.y));log('STRIKE <span class="d">着弾</span>','sys');break;
     case 'anchor':addFx({kind:'anchorUp',x:d.x,y:d.y,dur:720});V.shake=Math.max(V.shake,5);break;
     case 'overclock':addFx({kind:'ocUp',x:d.x,y:d.y,dur:760});break;
   }
@@ -2300,7 +2396,7 @@ function drawDecals(g){
       if(p<.6){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=hexA(d.color,.45*(1-p/.6));g.lineWidth=2;line(g,d.x0,d.y0,d.x1,d.y1);g.restore();}}
     return true;});
 }
-function areaRect(x,y){const x0=Math.max(0,x-1),y0=Math.max(0,y-1),x1=Math.min(N-1,x+1),y1=Math.min(N-1,y+1);return {x:x0*C,y:y0*C,w:(x1-x0+1)*C,h:(y1-y0+1)*C};}
+function areaRect(x,y,rad){const R=rad||1,x0=Math.max(0,x-R),y0=Math.max(0,y-R),x1=Math.min(N-1,x+R),y1=Math.min(N-1,y+R);return {x:x0*C,y:y0*C,w:(x1-x0+1)*C,h:(y1-y0+1)*C};}
 function drawSpikes(g,t){
   for(const sp of S.spikes){
     const r=areaRect(sp.x,sp.y),cx=cxOf(sp.x),cy=cxOf(sp.y);
@@ -2336,12 +2432,12 @@ function drawSpikes(g,t){
       const tw=g.measureText(lbl).width;g.fillStyle='#c77dff';poly(g,[r.x+2,r.y+2,r.x+tw+12,r.y+2,r.x+tw+6,r.y+C*.26,r.x+2,r.y+C*.26]);g.fill();g.fillStyle='#12021f';g.fillText(lbl,r.x+5,r.y+5);
     }
   }
-  for(const c of S.clusters){
-    const cx=cxOf(c.x),cy=cxOf(c.y);const pul=~~(t/110)%2;const r=areaRect(c.x,c.y);
-    g.save();g.setLineDash([C*.08,C*.06]);g.lineDashOffset=t*.05;g.strokeStyle=hexA('#ff5a1f',.85);g.lineWidth=1.5;g.strokeRect(r.x+2,r.y+2,r.w-4,r.h-4);g.restore();
-    g.fillStyle=hexA('#ff5a1f',.06+.05*pul);g.fillRect(r.x,r.y,r.w,r.h);g.fillStyle='rgba(0,0,0,.35)';g.fillRect(c.x*C+1,c.y*C+1,C-2,C-2);
-    g.beginPath();g.arc(cx,cy,C*.13,0,Math.PI*2);g.fillStyle='#3a1a10';g.fill();g.lineWidth=2;g.strokeStyle='#ff5a1f';g.stroke();
-    flare(g,cx,cy-C*.1,C*.12,pul?'#ff5a1f':'#ffe14d',.9,0);
+  for(const c of (S.shells||[])){
+    const col=WEAPONS.HOWITZER.color,pul=~~(t/110)%2;
+    for(const q of c.cells){g.fillStyle=hexA(col,.08+.06*pul);g.fillRect(q.x*C+1,q.y*C+1,C-2,C-2);
+      g.save();g.setLineDash([C*.08,C*.06]);g.lineDashOffset=t*.05;g.strokeStyle=hexA(col,.9);g.lineWidth=1.5;g.strokeRect(q.x*C+3,q.y*C+3,C-6,C-6);g.restore();
+      const cx=cxOf(q.x),cy=cxOf(q.y);g.beginPath();g.moveTo(cx,cy-C*.16);g.lineTo(cx+C*.1,cy+C*.06);g.lineTo(cx-C*.1,cy+C*.06);g.closePath();g.fillStyle=pul?col:'#ffffff';g.fill();}
+    const q0=c.cells[0];g.fillStyle=col;g.font='900 '+Math.round(C*.14)+'px Orbitron,DotGothic16';g.textAlign='left';g.textBaseline='top';g.fillText('SHELL',q0.x*C+4,q0.y*C+4);
   }
 }
 function drawHazards(g,t){
@@ -2378,20 +2474,20 @@ function drawHazards(g,t){
   }
   // orbital strikes (visible to both)
   for(const ob of S.orbitals){
-    const r=areaRect(ob.x,ob.y),col='#ff3355',bl=~~(t/120)%2,cx=cxOf(ob.x),cy=cxOf(ob.y);
+    const r=areaRect(ob.x,ob.y,2),col='#ff3355',bl=~~(t/120)%2,cx=cxOf(ob.x),cy=cxOf(ob.y);
     g.fillStyle=hexA(col,.08+.08*bl);g.fillRect(r.x,r.y,r.w,r.h);
     g.save();g.setLineDash([C*.12,C*.06]);g.lineDashOffset=t*.06;g.strokeStyle=hexA(col,.95);g.lineWidth=2;g.strokeRect(r.x+2,r.y+2,r.w-4,r.h-4);g.restore();
     g.save();g.translate(cx,cy);g.rotate(-t*.002);g.strokeStyle=col;g.lineWidth=2;g.beginPath();g.arc(0,0,C*.42,0,Math.PI*2);g.stroke();
     for(let i=0;i<4;i++){g.rotate(Math.PI/2);g.beginPath();g.moveTo(C*.2,0);g.lineTo(C*.55,0);g.stroke();}g.restore();
     g.fillStyle=col;g.font='900 '+Math.round(C*.14)+'px Orbitron,DotGothic16';g.textAlign='left';g.textBaseline='top';
-    g.fillText('ORBITAL · '+(ob.land===S.turn?'THIS TURN':'NEXT TURN'),r.x+4,r.y+4);
+    g.fillText('STRIKE · '+(ob.land===S.turn?'THIS TURN':'NEXT TURN'),r.x+4,r.y+4);
   }
   // haunt danger zones (around the turn-start position)
-  for(const u of S.units){if(!u.alive||!u.haunt)continue;
+  for(const u of S.units){if(!u.alive||!u.haunt||fakeReady(u))continue;
     const r=areaRect(u.sx,u.sy),col='#c77dff';
     g.fillStyle=hexA(col,.07+.04*Math.sin(t*.006));g.fillRect(r.x,r.y,r.w,r.h);
     g.save();g.setLineDash([3,5]);g.lineDashOffset=-t*.03;g.strokeStyle=hexA(col,.85);g.lineWidth=1.5;g.strokeRect(r.x+2,r.y+2,r.w-4,r.h-4);g.restore();
-    g.fillStyle=col;g.font='700 '+Math.round(C*.13)+'px Orbitron,DotGothic16';g.textAlign='right';g.textBaseline='bottom';g.fillText('HAUNT',r.x+r.w-4,r.y+r.h-3);
+    g.fillStyle=col;g.font='700 '+Math.round(C*.13)+'px Orbitron,DotGothic16';g.textAlign='right';g.textBaseline='bottom';g.fillText('HUNT',r.x+r.w-4,r.y+r.h-3);
   }
   // your own mines (the rival's stay hidden)
   for(const m of S.mines){if(m.owner!==0)continue;
@@ -2429,7 +2525,7 @@ function numBadge(g,x,y,n,col){
   const px=x*C+3,py=y*C+3,s=C*.26;
   g.fillStyle=col;poly(g,[px,py,px+s,py,px+s,py+s-3,px+s-3,py+s,px,py+s]);g.fill();g.fillStyle='#02030a';g.font='900 '+Math.round(C*.17)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='middle';g.fillText(String(n),px+s/2,py+s/2+1);
 }
-function modeColor(){if(UI.mode==='ult')return ULT_COLOR;if(UI.mode==='move')return '#00f0ff';if(UI.mode==='atk')return WEAPONS[S.units[0].weapon].color;return '#2dffa8';}
+function modeColor(){if(UI.mode==='ult')return ULT_COLOR;if(UI.mode==='dmove')return '#c77dff';if(UI.mode==='move')return '#00f0ff';if(UI.mode==='atk')return WEAPONS[S.units[0].weapon].color;return '#2dffa8';}
 function drawGeom(g,geo,col,strong){
   for(const c of geo.sub){if(!inB(c.x,c.y))continue;g.fillStyle=hexA(col,strong?.16:.07);g.fillRect(c.x*C+1,c.y*C+1,C-2,C-2);g.save();g.setLineDash([3,3]);g.strokeStyle=hexA(col,strong?.6:.3);g.lineWidth=1;g.strokeRect(c.x*C+3,c.y*C+3,C-6,C-6);g.restore();}
   for(const c of geo.main){if(!inB(c.x,c.y))continue;g.fillStyle=hexA(col,strong?.3:.12);g.fillRect(c.x*C+1,c.y*C+1,C-2,C-2);
@@ -2439,28 +2535,30 @@ function drawGeom(g,geo,col,strong){
 /* replay a queued plan from the real position → ghost state */
 function simPlan(){return simPlanFor(0,UI.plan);}
 function budget(u,sim){
-  if(sim.hold)return {ap:0,mv:0};
   const ap=u.ap+(sim.od?OD_BIT:0)-sim.ap;
   const mv=sim.lock?0:u.mv+(sim.od?OD_MV:0)-sim.mv;
   return {ap:Math.max(0,ap),mv:Math.max(0,Math.min(mv,Math.max(0,ap)))};
 }
 function simPlanFor(side,plan){
-  const u=S.units[side];let fort=u.fort,x=u.x,y=u.y,ap=0,mv=0,xray=false,od=false,lock=u.lockMv>=S.turn,hold=false,ult=false;const used=new Set(),steps=[];
+  const u=S.units[side];let fort=u.fort,x=u.x,y=u.y,ap=0,mv=0,xray=false,od=false,lock=u.lockMv>=S.turn,ult=false;const used=new Set(),steps=[];
+  let dpos=u.mirage?{x:u.mirage.x,y:u.mirage.y}:null,dmv=0;const dsteps=[];
   for(const a of plan){
     const from={x,y};
-    if(a.type==='move'){if(isFloor(x+a.dx,y+a.dy)){x+=a.dx;y+=a.dy;}ap+=fort?FORT_MOVE:1;fort=false;mv+=1;}
-    else if(a.type==='attack'){const W=WEAPONS[u.weapon];ap+=W.ap;if(W.kind==='dash'){fort=false;const k=dirIndex(a.rx,a.ry),dist=Math.max(Math.abs(a.rx),Math.abs(a.ry));let s=0;while(s<dist&&isFloor(x+DIR8[k][0]*(s+1),y+DIR8[k][1]*(s+1)))s++;x+=DIR8[k][0]*s;y+=DIR8[k][1]*s;}}
-    else if(a.type==='skill'){const d=SKILLS[a.key];ap+=d.ap||0;used.add(a.key);if(a.key==='FORTIFY')fort=true;else if(['BLINK','REWIND','SWAP'].includes(a.key))fort=false;
+    if(a.type==='dmove'){if(dpos){const f={x:dpos.x,y:dpos.y};if(isFloor(dpos.x+a.dx,dpos.y+a.dy)){dpos.x+=a.dx;dpos.y+=a.dy;}dmv++;dsteps.push({from:f,to:{x:dpos.x,y:dpos.y}});}continue;}
+    if(a.type==='move'){if(isFloor(x+a.dx,y+a.dy)){x+=a.dx;y+=a.dy;}ap+=1;mv+=1;}
+    else if(a.type==='unfort'){ap+=1;fort=false;}
+    else if(a.type==='attack'){const W=WEAPONS[u.weapon];ap+=W.ap;if(W.kind==='dash'){const k=dirIndex(a.rx,a.ry),dist=Math.max(Math.abs(a.rx),Math.abs(a.ry));let s=0;while(s<dist&&isFloor(x+DIR8[k][0]*(s+1),y+DIR8[k][1]*(s+1)))s++;x+=DIR8[k][0]*s;y+=DIR8[k][1]*s;}}
+    else if(a.type==='skill'){const d=SKILLS[a.key];ap+=d.ap||0;used.add(a.key);if(a.key==='FORTIFY')fort=true;
       if(a.key==='BLINK'){x+=a.rx;y+=a.ry;}else if(a.key==='REWIND'){x=u.sx;y=u.sy;}else if(a.key==='X_RAY')xray=true;
       else if(a.key==='SWAP'){const o=S.units[1-side];if(cheb({x,y},o)<=5){x=o.x;y=o.y;}}}
-    else if(a.type==='ult'){ult=true;if(a.key==='OVERDRIVE')od=true;else if(a.key==='GIGA_CANNON')lock=true;else if(a.key==='PHANTOM_MIRAGE'){x+=a.rx;y+=a.ry;hold=true;}}
+    else if(a.type==='ult'){ult=true;if(a.key==='OVERDRIVE')od=true;else if(a.key==='GIGA_CANNON')lock=true;else if(a.key==='PHANTOM_MIRAGE'){dpos={x,y};x+=a.rx;y+=a.ry;fort=false;}}
     steps.push({a,from,to:{x,y},xray});
   }
-  return {x,y,ap,mv,xray,od,lock,hold,ult,used,steps,fort};
+  return {x,y,ap,mv,xray,od,lock,ult,used,steps,fort,dpos,dmv,dsteps};
 }
 function threatNow(){
   const o=S.units[1];if(!o||!o.alive)return new Set();
-  const starts=[{x:o.x,y:o.y},...mirageCells(o)];
+  const starts=enemyCells();
   const key=S.turn+'|'+starts.map(c=>c.x+','+c.y).join(';')+'|'+o.ap+'|'+o.lockMv+'|'+S.map.map(r=>r.join('')).join('');
   if(UI._thrKey!==key){UI._thrKey=key;UI._thr=threatCells(1,starts);}
   return UI._thr;
@@ -2482,7 +2580,7 @@ function drawHackIntel(g,t){
   const sim=simPlanFor(1,UI.hack.enemy),col='#ff2a8a';
   sim.steps.forEach((st,i)=>{const a=st.a;
     if(a.type==='move'){g.strokeStyle=hexA(col,.75);g.lineWidth=2;g.setLineDash([4,4]);g.lineDashOffset=-t*.03;line(g,cxOf(st.from.x),cxOf(st.from.y),cxOf(st.to.x),cxOf(st.to.y));g.setLineDash([]);}
-    else if(a.type==='attack'){const W=WEAPONS[o.weapon];const geo=previewGeom('atk',o.weapon,st.from.x,st.from.y,st.from.x+a.rx,st.from.y+a.ry,st.xray&&W.tgt==='line');drawGeom(g,geo,col,true);numBadge(g,clamp(st.from.x+a.rx,0,N-1),clamp(st.from.y+a.ry,0,N-1),i+1,col);}
+    else if(a.type==='attack'){const W=WEAPONS[o.weapon];const geo=previewGeom('atk',o.weapon,st.from.x,st.from.y,st.from.x+a.rx,st.from.y+a.ry,st.xray&&xrTgt(W));drawGeom(g,geo,col,true);numBadge(g,clamp(st.from.x+a.rx,0,N-1),clamp(st.from.y+a.ry,0,N-1),i+1,col);}
     else if((a.type==='skill'||a.type==='ult')&&(a.rx||a.ry)){const tx=clamp(st.from.x+a.rx,0,N-1),ty=clamp(st.from.y+a.ry,0,N-1);bracket(g,tx,ty,col,.9,3);numBadge(g,tx,ty,i+1,col);}
   });
   const gx=cxOf(sim.x),gy=cxOf(sim.y);
@@ -2496,11 +2594,15 @@ function drawPlanning(g,t){
   if(UI.hack)drawHackIntel(g,t);
   const u=S.units[0];if(!u||!u.alive)return;
   const sim=simPlan();
+  for(const st of sim.dsteps){g.strokeStyle=hexA('#c77dff',.75);g.lineWidth=2;g.setLineDash([3,4]);g.lineDashOffset=-t*.03;line(g,cxOf(st.from.x),cxOf(st.from.y),cxOf(st.to.x),cxOf(st.to.y));g.setLineDash([]);
+    g.fillStyle='#c77dff';g.beginPath();g.arc(cxOf(st.to.x),cxOf(st.to.y),C*.06,0,Math.PI*2);g.fill();}
+  if(sim.dpos&&!u.mirage){bracket(g,sim.dpos.x,sim.dpos.y,'#c77dff',.85,3);}
+  if(sim.dpos&&sim.dsteps.length){g.fillStyle='#c77dff';g.font='700 '+Math.round(C*.14)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='bottom';g.fillText('DECOY',cxOf(sim.dpos.x),sim.dpos.y*C+C-3);}
   sim.steps.forEach((st,i)=>{
     const a=st.a;
     if(a.type==='move'){g.strokeStyle=hexA('#00f0ff',.6);g.lineWidth=2;g.setLineDash([4,4]);g.lineDashOffset=-t*.03;line(g,cxOf(st.from.x),cxOf(st.from.y),cxOf(st.to.x),cxOf(st.to.y));g.setLineDash([]);
       g.fillStyle='#00f0ff';g.beginPath();g.arc(cxOf(st.to.x),cxOf(st.to.y),C*.06,0,Math.PI*2);g.fill();}
-    else if(a.type==='attack'){const W=WEAPONS[u.weapon];const geo=previewGeom('atk',u.weapon,st.from.x,st.from.y,st.from.x+a.rx,st.from.y+a.ry,st.xray&&W.tgt==='line');drawGeom(g,geo,W.color,false);
+    else if(a.type==='attack'){const W=WEAPONS[u.weapon];const geo=previewGeom('atk',u.weapon,st.from.x,st.from.y,st.from.x+a.rx,st.from.y+a.ry,st.xray&&xrTgt(W));drawGeom(g,geo,W.color,false);
       const tx=clamp(st.from.x+a.rx,0,N-1),ty=clamp(st.from.y+a.ry,0,N-1);numBadge(g,tx,ty,i+1,W.color);}
     else if(a.type==='ult'&&(a.rx||a.ry||a.key==='ORBITAL_STRIKE')){const tx=clamp(st.from.x+a.rx,0,N-1),ty=clamp(st.from.y+a.ry,0,N-1);drawGeom(g,previewGeom('ult',a.key,st.from.x,st.from.y,tx,ty),ULT_COLOR,false);numBadge(g,tx,ty,i+1,ULT_COLOR);}
     else if(a.type==='skill'&&(a.rx||a.ry)){const tx=clamp(st.from.x+a.rx,0,N-1),ty=clamp(st.from.y+a.ry,0,N-1);
@@ -2530,12 +2632,12 @@ function drawPlanning(g,t){
     const isE=enemyCells().some(q=>q.x===c.x&&q.y===c.y);bracket(g,c.x,c.y,isE?'#ff2a8a':col,.45+.35*pul,3);}
   const pc=UI.sel||(UI.hover&&UI.cells.some(c=>c.x===UI.hover.x&&c.y===UI.hover.y)?UI.hover:null);
   if(pc){
-    if(UI.mode==='move'){const cell=UI.cells.find(c=>c.x===pc.x&&c.y===pc.y);if(cell&&cell.path){let x=sim.x,y=sim.y;glowPath(g,'#00f0ff',3,1,()=>{g.beginPath();g.moveTo(cxOf(x),cxOf(y));let xx=x,yy=y;for(const d of cell.path){xx+=d[0];yy+=d[1];g.lineTo(cxOf(xx),cxOf(yy));}});bracket(g,pc.x,pc.y,'#ffffff',.95,2);}}
+    if(UI.mode==='move'||UI.mode==='dmove'){const cell=UI.cells.find(c=>c.x===pc.x&&c.y===pc.y);if(cell&&cell.path){let x=UI.mode==='dmove'?sim.dpos.x:sim.x,y=UI.mode==='dmove'?sim.dpos.y:sim.y;glowPath(g,'#00f0ff',3,1,()=>{g.beginPath();g.moveTo(cxOf(x),cxOf(y));let xx=x,yy=y;for(const d of cell.path){xx+=d[0];yy+=d[1];g.lineTo(cxOf(xx),cxOf(yy));}});bracket(g,pc.x,pc.y,'#ffffff',.95,2);}}
     else{
       const kind=UI.mode==='atk'?'atk':UI.mode==='ult'?'ult':'sk';const key=UI.mode==='atk'?u.weapon:UI.mode==='ult'?u.ult:u.skills[+UI.mode.slice(2)].key;
-      const geo=previewGeom(kind,key,sim.x,sim.y,pc.x,pc.y,sim.xray&&WEAPONS[u.weapon].tgt==='line');
+      const geo=UI.mode==='dmove'?{main:[],sub:[],path:[],push:[]}:previewGeom(kind,key,sim.x,sim.y,pc.x,pc.y,sim.xray&&xrTgt(WEAPONS[u.weapon]));
       drawGeom(g,geo,col,true);
-      if(kind==='atk'&&(WEAPONS[key].tgt==='throw'||WEAPONS[key].tgt==='lob')){g.save();g.setLineDash([4,4]);g.lineDashOffset=-t*.04;g.strokeStyle=hexA(col,.85);g.lineWidth=1.6;g.beginPath();const x0=cxOf(sim.x),y0=cxOf(sim.y),x1=cxOf(pc.x),y1=cxOf(pc.y);g.moveTo(x0,y0);g.quadraticCurveTo((x0+x1)/2,Math.min(y0,y1)-C*1.2,x1,y1);g.stroke();g.restore();}
+      if(kind==='atk'&&['throw','lob','lob3'].includes(WEAPONS[key].tgt)){g.save();g.setLineDash([4,4]);g.lineDashOffset=-t*.04;g.strokeStyle=hexA(col,.85);g.lineWidth=1.6;g.beginPath();const x0=cxOf(sim.x),y0=cxOf(sim.y),x1=cxOf(pc.x),y1=cxOf(pc.y);g.moveTo(x0,y0);g.quadraticCurveTo((x0+x1)/2,Math.min(y0,y1)-C*1.2,x1,y1);g.stroke();g.restore();}
       bracket(g,pc.x,pc.y,'#ffffff',.95,1);
     }
   }
@@ -2560,8 +2662,10 @@ function drawDecoy(g,u,s,c,t,dt){
   if(own){g.fillStyle=hexA('#c77dff',.9);g.font='700 '+Math.round(C*.13)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='bottom';g.fillText('DECOY',px,c.y*C+C-2);}
   else if(vu)unitEmitters(u,{tx:c.x,ty:c.y,x:c.x,y:c.y,flip},s,{x:px,y:py},t,dt);
 }
-function mirageCells(u){return u&&u.alive&&u.mirage?u.mirage.decoys:[];}
-function enemyCells(){const o=S.units[1];if(!o||!o.alive)return [];return [{x:o.x,y:o.y},...mirageCells(o)];}
+/* the rival as this player sees it (a hidden MIRAGE body shows as its decoy) */
+function enemyCells(){const o=S.units[1];if(!o||!o.alive)return [];return [visCell(1)];}
+const ownHidden=s=>{const u=S.units[s];return !!(u&&u.alive&&u.mirage&&decoyOwnView(s));};
+const fakeReady=u=>!!(u&&u.mirage&&!decoyOwnView(u.side));
 
 /* ── units ── */
 function drawUnitUnder(g,t){
@@ -2572,8 +2676,6 @@ function drawUnitUnder(g,t){
     const rg=g.createRadialGradient(p.x,p.y+C*.3,0,p.x,p.y+C*.3,C*.95);rg.addColorStop(0,hexA(col,.3));rg.addColorStop(1,hexA(col,0));
     g.fillStyle=rg;g.beginPath();g.arc(p.x,p.y+C*.3,C*.95,0,Math.PI*2);g.fill();
     const q=((t*.0005+s*.5)%1);g.strokeStyle=hexA(col,.3*(1-q));g.lineWidth=1.5;g.beginPath();g.arc(p.x,p.y+C*.3,C*(.3+q*1.5),0,Math.PI*2);g.stroke();
-    if(!decoyOwnView(s))for(const c of mirageCells(u)){const x=cxOf(c.x),y=cxOf(c.y);const r2=g.createRadialGradient(x,y+C*.3,0,x,y+C*.3,C*.95);r2.addColorStop(0,hexA(col,.3));r2.addColorStop(1,hexA(col,0));g.fillStyle=r2;g.beginPath();g.arc(x,y+C*.3,C*.95,0,Math.PI*2);g.fill();
-      g.strokeStyle=hexA(col,.3*(1-q));g.lineWidth=1.5;g.beginPath();g.arc(x,y+C*.3,C*(.3+q*1.5),0,Math.PI*2);g.stroke();}
     g.restore();
   }
 }
@@ -2625,9 +2727,11 @@ function drawUnits(g,t,dt){
     for(const q of vu.trail){const a=1-(now()-q.t0)/280;drawMech(g,u.frame,u.weapon,RIMPAL[s],(q.x+.5)*C,(q.y+.5)*C-C*.05,C*1.02,vu.flip,t,{alpha:.3*a,noGlow:true,seed:s*2,pose,state:'walk',dir});}
     // rim silhouette (feeds the bloom → neon outline)
     if(u.alive)drawMech(g,u.frame,u.weapon,RIMPAL[s],p.x,py,C*1.02,vu.flip,t,{alpha:.34+.12*Math.sin(t*.004+s),noGlow:true,rim:true,seed:s*2,sq:vu.sq,pose,state,dir,lean});
+    const hid=ownHidden(s);if(hid){g.save();g.globalAlpha=.42;}
     drawMech(g,u.frame,u.weapon,PAL[s][u.frame],p.x,py,C*1.02,vu.flip,t,{dead:!u.alive,stun:u.stunned,flash:vu.flash,glitch:vu.glitch,sq:vu.sq,seed:s*2,reflect:u.alive&&!hop,pose,state,dir,lean,alt,
       tint:vu.flash>.05?{c:'#ff3050',a:Math.min(.35,vu.flash*.35)}:null});
-    unitEmitters(u,vu,s,p,t,dt);
+    if(hid){g.restore();g.fillStyle=hexA('#c77dff',.95);g.font='700 '+Math.round(C*.13)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='bottom';g.fillText('HIDDEN',p.x,Math.min(BW-2,p.y+C*.5));}
+    else unitEmitters(u,vu,s,p,t,dt);
     if(!u.alive){if(dt>0&&Math.random()<dt*8)smoke(p.x,p.y-C*.1,1,'#1a1d26',{life:60,a:.6});continue;}
     if(u.shield){
       g.save();g.translate(p.x,p.y-C*.05);g.globalCompositeOperation='lighter';const r=C*.52;
@@ -2645,8 +2749,8 @@ function drawUnits(g,t,dt){
     const bw=C*.62,bx=p.x-bw/2,by=Math.max(2,p.y-C*.8);g.fillStyle='rgba(0,0,0,.75)';g.fillRect(bx-1,by-1,bw+2,5);
     g.fillStyle='rgba(255,255,255,.55)';g.fillRect(bx,by,bw*clamp(V.hpG[s]/u.maxHp,0,1),3);
     g.fillStyle=col;g.fillRect(bx,by,bw*clamp(V.hp[s]/u.maxHp,0,1),3);
-    for(const c of mirageCells(u))drawDecoy(g,u,s,c,t,dt);
-    if(u.alive&&!u.ultUsed&&u.gauge>=GAUGE_MAX){const spots=[{x:p.x,y:p.y},...mirageCells(u).map(c=>({x:cxOf(c.x),y:cxOf(c.y)}))];
+    if(hid&&V.dc[s])drawDecoy(g,u,s,V.dc[s],t,dt);
+    if(u.alive&&((!u.ultUsed&&u.gauge>=GAUGE_MAX)||fakeReady(u))){const spots=[{x:p.x,y:p.y}];
       for(const q of spots){const w2=C*.5,h2=C*.2,hb=Math.max(2,q.y-C*.8);let by2=hb-h2-3;if(by2<-TOP+2)by2=hb+7;const pul=.8+.2*Math.sin(t*.012);g.save();g.globalAlpha=pul;g.shadowColor=ULT_COLOR;g.shadowBlur=8;g.fillStyle=ULT_COLOR;
         g.beginPath();g.moveTo(q.x-w2/2,by2);g.lineTo(q.x+w2/2,by2);g.lineTo(q.x+w2/2-3,by2+h2);g.lineTo(q.x-w2/2+3,by2+h2);g.closePath();g.fill();
         g.shadowBlur=0;g.fillStyle='#02030a';g.font='900 '+Math.round(C*.14)+'px Orbitron,DotGothic16';g.textAlign='center';g.textBaseline='middle';g.fillText('ULT',q.x,by2+h2/2+1);g.restore();}}
@@ -3091,7 +3195,8 @@ function renderGame(t,dt){
   for(let s=0;s<2;s++){const vu=V.u[s];const k=Math.min(1,pdt*vu.spd);vu.x+=(vu.tx-vu.x)*k;vu.y+=(vu.ty-vu.y)*k;
     vu.ox*=Math.max(0,1-pdt*12);vu.oy*=Math.max(0,1-pdt*12);vu.flash=Math.max(0,vu.flash-dt*5);vu.glitch=Math.max(0,vu.glitch-dt*3.2);vu.sq=Math.max(0,vu.sq-pdt*5);
     if(Math.abs(vu.tx-vu.x)<.01&&Math.abs(vu.ty-vu.y)<.01){vu.x=vu.tx;vu.y=vu.ty;vu.spd=13;}
-    V.hpG[s]+=(V.hp[s]-V.hpG[s])*Math.min(1,dt*3);}
+    V.hpG[s]+=(V.hp[s]-V.hpG[s])*Math.min(1,dt*3);
+    const dc=V.dc[s];if(dc){const q=Math.min(1,pdt*11);dc.x+=(dc.tx-dc.x)*q;dc.y+=(dc.ty-dc.y)*q;}}
   updateHpBars();
   const key=mapKey();if(key!==bgKey||!bgCanvas||bgCanvas.width!==board.width){buildBackground();bgKey=key;}
   const g=bctx;g.setTransform(DPR,0,0,DPR,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,BW,BW+TOP);
@@ -3152,8 +3257,8 @@ function tagsFor(u,self){
   if(u.reflect)t.push(['REFLECT','g']);if(u.anchor)t.push(['ANCHOR','g']);if(u.overclock)t.push(['OVERCLOCK','o']);
   if(u.iron)t.push(['IRON WALL','y']);if(u.counter)t.push(['COUNTER','o']);
   if(u.odNext)t.push(['OVERDRIVE','o']);if(u.overheat)t.push(['OVERHEAT','d']);
-  if(u.lockMv>=S.turn)t.push(['MOVE LOCK','d']);if(u.haunt)t.push(['HAUNTED','v']);
-  if(u.mirage)t.push(['MIRAGE','v']);if(u.crit)t.push(['CRIT ×1.5','y']);
+  if(u.lockMv>=S.turn)t.push(['MOVE LOCK','d']);if(u.haunt)t.push(['HUNTED','v']);
+  if(u.mirage&&decoyOwnView(u.side))t.push(['MIRAGE','v']);
   if(self){const m=S.mines.filter(m=>m.owner===u.side).length;if(m)t.push(['MINE ×'+m,'y']);}
   return t;
 }
@@ -3174,11 +3279,11 @@ function refreshHUD(){
   $('h1eq').innerHTML='<b>'+rb(WEAPONS[u1.weapon].name)+'</b> · '+u1.skills.map(s=>u1.revealed.includes(s.key)?rb(SKILLS[s.key].name):'???').join(' / ');
   for(let s=0;s<2;s++){$('h'+s+'tg').innerHTML=tagsFor(S.units[s],s===0).map(([n,c])=>'<span class="tg '+c+'">'+n+'</span>').join('');}
   const sim=S.phase==='plan'?simPlan():{ap:0};
-  for(let s=0;s<2;s++){const u=S.units[s],row=$('h'+s+'ur');if(!row)continue;const rdy=!u.ultUsed&&u.gauge>=GAUGE_MAX;
-    $('h'+s+'ug').style.width=(u.ultUsed?0:clamp(u.gauge/GAUGE_MAX,0,1)*100)+'%';
+  for(let s=0;s<2;s++){const u=S.units[s],row=$('h'+s+'ur');if(!row)continue;const fk=fakeReady(u),used=u.ultUsed&&!fk,rdy=(!u.ultUsed&&u.gauge>=GAUGE_MAX)||fk;
+    $('h'+s+'ug').style.width=(used?0:fk?100:clamp(u.gauge/GAUGE_MAX,0,1)*100)+'%';
     const nm=(s===0||u.revealed.includes('ULT')||UI.replay)?ULTS[u.ult].name:'???';
-    $('h'+s+'un').textContent=nm+(u.ultUsed?' · USED':rdy?' · READY':' '+u.gauge+'%');
-    row.classList.toggle('ready',rdy);row.classList.toggle('used',u.ultUsed);}
+    $('h'+s+'un').textContent=nm+(used?(u.mirage?' · ACTIVE':' · USED'):rdy?' · READY':' '+u.gauge+'%');
+    row.classList.toggle('ready',rdy);row.classList.toggle('used',used);}
   const apEl=$('h0ap');let h='';const total=u0.ap+(sim.od?OD_BIT:0);const used=Math.min(total,sim.ap);
   for(let i=0;i<total;i++)h+='<i class="pip'+(i>=total-used?' plan':'')+'"></i>';
   if(!total)h='<i class="pip off"></i>';
@@ -3186,6 +3291,7 @@ function refreshHUD(){
   $('apL').textContent=Math.max(0,total-used);$('apM').textContent=total;
   $('tNum').textContent=pad2(S.turn);
   const dl=NET.on?NET.deadline:UI.deadline,left=dl?Math.max(0,Math.ceil((dl-Date.now())/1000)):null;
+  {const cd=$('cdown');if(cd){const on=S.phase==='plan'&&left!=null&&left<=5&&left>0&&!S.over;const v=on?String(left):'';if(cd.dataset.v!==v){cd.dataset.v=v;cd.textContent=v;cd.classList.remove('pop');if(on){void cd.offsetWidth;cd.classList.add('pop');}}cd.classList.toggle('on',on);}}
   const tp=$('tPh');tp.textContent=S.over?'END':S.phase==='wait'?'WAIT':S.phase==='plan'?((UI.hack?'HACK':'PLAN')+(left!=null?' '+left:'')):'EXECUTE';tp.classList.toggle('ex',S.phase!=='plan');
   tp.classList.toggle('urg',S.phase==='plan'&&left!=null&&left<=5);
   {const tb=$('tbar');if(tb){const on=S.phase==='plan'&&dl&&!S.over;tb.style.width=on?(clamp((dl-Date.now())/(TURN_SEC*1000),0,1)*100)+'%':'0';tb.classList.toggle('urg',on&&left<=5);}}tp.classList.toggle('hk',!!UI.hack&&S.phase==='plan');
@@ -3193,6 +3299,8 @@ function refreshHUD(){
 }
 function chipLabel(a,u){
   if(a.type==='move')return {t:ARROW8[dirIndex(a.dx,a.dy)],k:'m',s:'MOVE'};
+  if(a.type==='dmove')return {t:'分身 '+ARROW8[dirIndex(a.dx,a.dy)],k:'u'};
+  if(a.type==='unfort')return {t:'FORTIFY解除',k:'s'};
   if(a.type==='attack')return {t:WEAPONS[u.weapon].name+' '+ARROW8[dirIndex(a.rx,a.ry)],k:'a'};
   if(a.type==='ult')return {t:'★'+ULTS[a.key].name+(a.rx||a.ry?' '+ARROW8[dirIndex(a.rx,a.ry)]:''),k:'u'};
   const d=SKILLS[a.key];return {t:d.name+((a.rx||a.ry)&&a.key!=='SWAP'?' '+ARROW8[dirIndex(a.rx,a.ry)]:''),k:'s'};
@@ -3212,7 +3320,7 @@ function skillState(slot){
   if(sk.cd>0)return {ok:false,why:'CD',cd:sk.cd};
   if(S.turn===u.silencedTurn)return {ok:false,why:'SILENCED'};
   if(sim.used.has(sk.key))return {ok:false,why:'予約済み'};
-  if(sim.hold)return {ok:false,why:'MIRAGE'};
+  if(sim.fort&&['BLINK','REWIND','SWAP'].includes(sk.key))return {ok:false,why:'FORTIFY中'};
   if((d.ap||0)>budget(u,sim).ap)return {ok:false,why:'BIT不足'};
   return {ok:true};
 }
@@ -3222,16 +3330,17 @@ function expectedDmg(){
   let d=W.dmg;if(u.frame==='GHOST')d+=momBonus(u.moveDist+sim.mv);
   let m=1;if(sim.used.has('OVERCLOCK'))m*=OC_MULT;
   const firstAtk=!UI.plan.some(a=>a.type==='attack');
-  if(firstAtk&&(u.crit||(u.mirage&&u.mirage.reveal<=S.turn+0)))m*=MIRAGE_CRIT;
+  if(firstAtk&&(u.mirage||sim.dpos))m*=MIRAGE_MULT;
   return Math.round(d*m);
 }
+function decoyMode(){const u=S.units[0];if(u.mirage)return true;return UI.plan.some(a=>a.type==='ult'&&a.key==='PHANTOM_MIRAGE');}
 function ultState(){
   const u=S.units[0];
+  if(decoyMode()){const n=DECOY_STEPS-simPlan().dmv;return n>0?{ok:true,decoy:n}:{ok:false,why:'分身 移動済み'};}
   if(u.ultUsed)return {ok:false,why:'USED'};
   if(u.gauge<GAUGE_MAX)return {ok:false,why:'GAUGE '+u.gauge+'%'};
   if(UI.hack)return {ok:false,why:'HACK中'};
   if(UI.plan.some(a=>a.type==='ult'))return {ok:false,why:'予約済み'};
-  if(simPlan().hold)return {ok:false,why:'MIRAGE'};
   return {ok:true};
 }
 function refreshButtons(){
@@ -3239,7 +3348,10 @@ function refreshButtons(){
   const u=S.units[0];const planning=S.phase==='plan'&&!UI.busy&&!S.over&&u.alive;const sim=planning?simPlan():{ap:0};const bud=planning?budget(u,sim):{ap:0,mv:0};const apLeft=bud.ap;
   const W=WEAPONS[u.weapon];
   $('atkN').innerHTML=rb(W.name);$('atkS').innerHTML='<span class="n bit">'+W.ap+'BIT</span> <span class="n dmg">'+(W.dmg||'—')+'DMG</span>';
-  const mvLeft=bud.mv;$('bMove').disabled=!planning||apLeft<1||mvLeft<1;$('bMoveS').innerHTML='残り<span class="n cell">'+Math.max(0,Math.min(mvLeft,apLeft))+'マス</span>';$('bAtk').disabled=!planning||apLeft<W.ap;
+  const mvLeft=bud.mv;
+  if(planning&&sim.fort){$('bMove').disabled=apLeft<1;$('bMoveS').innerHTML='解除 <span class="n bit">1BIT</span>';}
+  else{$('bMove').disabled=!planning||apLeft<1||mvLeft<1;$('bMoveS').innerHTML='残り<span class="n cell">'+Math.max(0,Math.min(mvLeft,apLeft))+'マス</span>';}
+  $('bAtk').disabled=!planning||apLeft<W.ap||(sim.fort&&W.kind==='dash');
   for(let i=0;i<2;i++){
     const b=$('bSk'+i),sk=u.skills[i];
     if(!sk){b.style.display='none';continue;}b.style.display='';
@@ -3250,8 +3362,9 @@ function refreshButtons(){
     const cv=$('sk'+i+'C');if(sk.cd>0){cv.classList.add('show');cv.innerHTML=sk.cd+'<small>TURN</small>';}else cv.classList.remove('show');
   }
   {const us=ultState(),b=$('bUlt'),rdy=!u.ultUsed&&u.gauge>=GAUGE_MAX;
-    $('ultN').innerHTML='★ '+rb(ULT_SHORT[u.ult]);$('ultS').textContent=u.ultUsed?'USED':rdy?(us.ok?'READY!':us.why):'GAUGE '+u.gauge+'%';
-    b.style.setProperty('--g',(u.ultUsed?0:clamp(u.gauge/GAUGE_MAX,0,1)*100)+'%');b.disabled=!planning||!us.ok;b.classList.toggle('ready',rdy);b.classList.toggle('on',UI.mode==='ult');}
+    if(planning&&decoyMode()){$('ultN').innerHTML='★ 分身';$('ultS').textContent=us.ok?'残り'+us.decoy+'マス':us.why;b.style.setProperty('--g','100%');b.disabled=!us.ok;b.classList.toggle('ready',us.ok);b.classList.toggle('on',UI.mode==='dmove');}
+    else{$('ultN').innerHTML='★ '+rb(ULT_SHORT[u.ult]);$('ultS').textContent=u.ultUsed?(u.mirage?'ACTIVE':'USED'):rdy?(us.ok?'READY!':us.why):'GAUGE '+u.gauge+'%';
+    b.style.setProperty('--g',(u.ultUsed?0:clamp(u.gauge/GAUGE_MAX,0,1)*100)+'%');b.disabled=!planning||!us.ok;b.classList.toggle('ready',rdy);b.classList.toggle('on',UI.mode==='ult');}}
   if(u.skills.length<2){$('ctrl').style.gridTemplateColumns='repeat(4,1fr)';$('bExec').style.gridColumn='span 2';}
   $('bUndo').disabled=!planning||!UI.plan.length;$('bReset').disabled=!planning||(!UI.plan.length&&!UI.mode);$('bExec').disabled=!planning;
   $('bMove').classList.toggle('on',UI.mode==='move');$('bAtk').classList.toggle('on',UI.mode==='atk');
@@ -3264,9 +3377,10 @@ function setHint(){
   if(S.phase!=='plan'){el.innerHTML='<b>EXECUTE</b> — 両者の行動を同時解決中…';return;}
   const tap=UI.touch?'タップで照準 → <b>もう一度タップで確定</b>':'クリックで確定';
   const u=S.units[0];
-  if(!UI.mode){el.innerHTML=UI.hack?'<b style="color:var(--g)">SYSTEM HACK</b> — 相手の予約が丸見え。組み直して <b>EXECUTE ▶▶</b>':simPlan().hold?'<b>PHANTOM MIRAGE</b> — このターンの行動はここまで → <b>EXECUTE ▶▶</b>':'行動を予約 → <b>EXECUTE ▶▶</b>（相手も同時に動く）';return;}
+  if(!UI.mode){el.innerHTML=UI.hack?'<b style="color:var(--g)">SYSTEM HACK</b> — 相手の予約が丸見え。組み直して <b>EXECUTE ▶▶</b>':decoyMode()?'<b style="color:#c77dff">MIRAGE</b> — 先に<b>★分身</b>の動き（0BIT・最大3マス）→ 自分の行動 → <b>EXECUTE ▶▶</b>':'行動を予約 → <b>EXECUTE ▶▶</b>（相手も同時に動く）';return;}
+  if(UI.mode==='dmove'){el.innerHTML='<b style="color:#c77dff">DECOY</b> — 分身の移動先を選択（あと<span class="n cell">'+(DECOY_STEPS-simPlan().dmv)+'マス</span>・0BIT）';return;}
   if(UI.mode==='move'){el.innerHTML='<b>MOVE</b> — 移動先を選択（このターンあと<span class="n cell">'+budget(u,simPlan()).mv+'マス</span>）';return;}
-  if(UI.mode==='ult'){const d=ULTS[u.ult];el.innerHTML='<b style="color:#ffd23a">★ '+d.name+'</b> '+(d.tgt==='dir4'?'（縦横の方向を選択）':d.tgt==='any'?'（3×3の中心を選択）':'（移動先を選択・分身は自動配置）')+' — '+tap;return;}
+  if(UI.mode==='ult'){const d=ULTS[u.ult];el.innerHTML='<b style="color:#ffd23a">★ '+d.name+'</b> '+(d.tgt==='dir4'?'（縦横の方向を選択）':d.tgt==='any'?'（5×5の中心を選択）':'（姿を消して移動する先を選択・今いる場所に分身が残る）')+' — '+tap;return;}
   if(UI.mode==='atk'){const W=WEAPONS[u.weapon];el.innerHTML='<b>'+W.name+'</b> '+W.rtag+' · 予想 <span class="n dmg">'+expectedDmg()+' DMG</span> — '+tap;return;}
   const sk=u.skills[+UI.mode.slice(2)];const d=SKILLS[sk.key];
   const extra=sk.key==='SWAP'?'（範囲内ならどこでも可）':sk.key==='HOOK'?'（方向を選択）':'';
@@ -3289,15 +3403,23 @@ function enterMode(mode){
   if(UI.mode===mode){exitMode();return;}
   const u=S.units[0];if(!u.alive)return;
   const sim=simPlan();const bud=budget(u,sim),apLeft=bud.ap;let cells=[],tgt=null,range=0;
-  if(sim.hold&&mode!=='ult'){toast('MIRAGE — このターンの行動は終了');return;}
-  if(mode==='ult'){const st=ultState();if(!st.ok){toast(st.why);return;}const d=ULTS[u.ult];
+  if(mode==='ult'&&decoyMode())mode='dmove';
+  if(mode==='dmove'){const st=ultState();if(!st.ok){toast(st.why);return;}
+    if(!sim.dpos){toast('分身がいない');return;}
+    const occ=enemyCells();const bf=bfsFrom(sim.dpos,(x,y)=>occ.some(c=>c.x===x&&c.y===y)||(x===sim.x&&y===sim.y),st.decoy);
+    for(const n of bf.order){if(n.x===sim.dpos.x&&n.y===sim.dpos.y)continue;cells.push({x:n.x,y:n.y,path:pathDirs(bf.par,n)});}
+    tgt='move';
+    if(UI.mode==='dmove'){exitMode();return;}}
+  else if(mode==='ult'){const st=ultState();if(!st.ok){toast(st.why);return;}const d=ULTS[u.ult];
     if(d.tgt==='none'){UI.plan.push({type:'ult',key:u.ult,rx:0,ry:0});exitMode();afterPlanChange();toast(d.name+' を予約'+(u.ult==='SYSTEM_HACK'?'（相手には見えない）':''));return;}
     tgt=d.tgt;range=d.range||N;
     if(tgt==='dir4'){for(const [dx,dy] of DIR4){let x=sim.x+dx,y=sim.y+dy;while(inB(x,y)){cells.push({x,y});x+=dx;y+=dy;}}}
     else if(tgt==='square')cells=targetOptions(sim.x,sim.y,'square',range,0).filter(c=>!enemyCells().some(q=>q.x===c.x&&q.y===c.y));
     else for(let y=0;y<N;y++)for(let x=0;x<N;x++)cells.push({x,y});}
-  else if(mode==='move'){if(apLeft<1){toast('BITが足りない');return;}const mvLeft=bud.mv;if(mvLeft<1){toast('このターンの移動上限');return;}const stepsAff=sim.fort?(apLeft>=FORT_MOVE?apLeft-FORT_MOVE+1:0):apLeft;if(stepsAff<1){toast('FORTIFY解除にはBIT'+FORT_MOVE+'が必要');return;}cells=moveCells(sim.x,sim.y,Math.min(stepsAff,mvLeft));tgt='move';}
-  else if(mode==='atk'){const W=WEAPONS[u.weapon];if(apLeft<W.ap){toast('BITが足りない');return;}tgt=W.tgt==='line'&&sim.xray?'ray':W.tgt;range=W.range;cells=targetOptions(sim.x,sim.y,tgt,range,0);}
+  else if(mode==='move'){if(apLeft<1){toast('BITが足りない');return;}
+    if(sim.fort){UI.plan.push({type:'unfort'});exitMode();afterPlanChange();toast('FORTIFY 解除を予約（1BIT）');return;}
+    const mvLeft=bud.mv;if(mvLeft<1){toast('このターンの移動上限');return;}cells=moveCells(sim.x,sim.y,Math.min(apLeft,mvLeft));tgt='move';}
+  else if(mode==='atk'){const W=WEAPONS[u.weapon];if(apLeft<W.ap){toast('BITが足りない');return;}if(sim.fort&&W.kind==='dash'){toast('FORTIFY中は突進できない');return;}tgt=xrTgt(W)&&sim.xray?'ray':W.tgt;range=W.range;cells=targetOptions(sim.x,sim.y,tgt,range,0);}
   else{const slot=+mode.slice(2);const st=skillState(slot);if(!st.ok){toast(st.why==='CD'?'クールダウン中':st.why);return;}
     const sk=u.skills[slot],d=SKILLS[sk.key];
     if(d.tgt==='none'){UI.plan.push({type:'skill',slot,key:sk.key,rx:0,ry:0});exitMode();afterPlanChange();toast(d.name+' を予約');return;}
@@ -3309,7 +3431,11 @@ function enterMode(mode){
 function exitMode(){UI.mode=null;UI.cells=[];UI.sel=null;UI.tgt=null;refreshButtons();setHint();}
 function commitCell(c){
   const u=S.units[0];const sim=simPlan();
-  if(UI.mode==='move'){const cell=UI.cells.find(q=>q.x===c.x&&q.y===c.y);if(!cell)return;const grp=now()+Math.random();for(const d of cell.path)UI.plan.push({type:'move',dx:d[0],dy:d[1],_grp:grp});}
+  if(UI.mode==='move'||UI.mode==='dmove'){const cell=UI.cells.find(q=>q.x===c.x&&q.y===c.y);if(!cell)return;const grp=now()+Math.random(),ty=UI.mode;
+    if(ty==='dmove'){/* decoy steps go right after the activation (or at the top of the turn) so they never land before it */
+      let at=UI.plan.findIndex(a=>a.type==='ult'&&a.key==='PHANTOM_MIRAGE');at=at<0?0:at+1;while(at<UI.plan.length&&UI.plan[at].type==='dmove')at++;
+      UI.plan.splice(at,0,...cell.path.map(d=>({type:'dmove',dx:d[0],dy:d[1],_grp:grp})));}
+    else for(const d of cell.path)UI.plan.push({type:'move',dx:d[0],dy:d[1],_grp:grp});}
   else if(UI.mode==='atk'){UI.plan.push({type:'attack',rx:c.x-sim.x,ry:c.y-sim.y});}
   else if(UI.mode==='ult'){UI.plan.push({type:'ult',key:u.ult,rx:c.x-sim.x,ry:c.y-sim.y});}
   else{const slot=+UI.mode.slice(2);const sk=u.skills[slot];UI.plan.push({type:'skill',slot,key:sk.key,rx:c.x-sim.x,ry:c.y-sim.y});}
@@ -3330,6 +3456,8 @@ function undoAction(){
   if(!S||S.phase!=='plan'||UI.busy||!UI.plan.length)return;
   const last=UI.plan.pop();
   if(last.type==='move'){while(UI.plan.length&&UI.plan[UI.plan.length-1].type==='move'&&UI.plan[UI.plan.length-1]._grp&&UI.plan[UI.plan.length-1]._grp===last._grp)UI.plan.pop();}
+  if(last.type==='dmove'&&last._grp)UI.plan=UI.plan.filter(a=>a._grp!==last._grp);
+  if(last.type==='ult'&&last.key==='PHANTOM_MIRAGE')UI.plan=UI.plan.filter(a=>a.type!=='dmove');
   const m=UI.mode;if(m){UI.mode=null;enterMode(m);}
   afterPlanChange();
 }
@@ -3388,7 +3516,7 @@ async function executeTurn(){
 async function resolveTurn(plans){
   if(!UI.replay)recTurn(plans);
   S.phase='exec';
-  UI.execPlan=plans[0];UI.plan=[];UI.stepIdx=-1;
+  UI.execPlan=plans[0].filter(a=>a.type!=='dmove');UI.plan=[];UI.stepIdx=-1;
   refreshAll();
   log('── TURN '+pad2(S.turn)+' EXECUTE ──','sys');
   banner('EXECUTE','TURN '+pad2(S.turn)+' // RESOLVE','#ffe14d',900);await sleep(700);
@@ -3470,9 +3598,9 @@ function renderPresets(){
       so a whole match fits in a short URL. ── */
 let REC=null,LAST_REPLAY=null;
 function cfgRow(c){return [c.frame,c.weapon,c.skills.slice(0,2),String(c.name||''),String(c.mech||''),String(c.ult||'')];}
-function recStart(seed,c0,c1,mirror){REC={v:5,s:seed>>>0,m:mirror?1:0,c:[cfgRow(c0),cfgRow(c1)],t:[],d:Date.now(),on:NET.on?1:0};}
-function encAct(a){return a.type==='move'?[0,a.dx,a.dy]:a.type==='attack'?[1,a.rx,a.ry]:a.type==='ult'?[3,a.rx||0,a.ry||0]:[2,a.slot,a.rx||0,a.ry||0];}
-function decAct(x,cfg){if(!Array.isArray(x)||!x.every(v=>Number.isInteger(v)&&Math.abs(v)<N))return null;if(x[0]===0)return {type:'move',dx:x[1],dy:x[2]};if(x[0]===1)return {type:'attack',rx:x[1],ry:x[2]};if(x[0]===3)return {type:'ult',key:cfg.ult||ULT_OF(cfg.frame)[0],rx:x[1]||0,ry:x[2]||0};
+function recStart(seed,c0,c1,mirror){REC={v:6,s:seed>>>0,m:mirror?1:0,c:[cfgRow(c0),cfgRow(c1)],t:[],d:Date.now(),on:NET.on?1:0};}
+function encAct(a){return a.type==='move'?[0,a.dx,a.dy]:a.type==='attack'?[1,a.rx,a.ry]:a.type==='ult'?[3,a.rx||0,a.ry||0]:a.type==='unfort'?[4]:a.type==='dmove'?[5,a.dx,a.dy]:[2,a.slot,a.rx||0,a.ry||0];}
+function decAct(x,cfg){if(!Array.isArray(x)||!x.every(v=>Number.isInteger(v)&&Math.abs(v)<N))return null;if(x[0]===0)return {type:'move',dx:x[1],dy:x[2]};if(x[0]===1)return {type:'attack',rx:x[1],ry:x[2]};if(x[0]===3)return {type:'ult',key:cfg.ult||ULT_OF(cfg.frame)[0],rx:x[1]||0,ry:x[2]||0};if(x[0]===4)return {type:'unfort'};if(x[0]===5)return {type:'dmove',dx:x[1],dy:x[2]};
   const key=cfg.skills[x[1]];return key?{type:'skill',slot:x[1],key,rx:x[2]||0,ry:x[3]||0}:null;}
 function recTurn(plans){if(REC)REC.t.push([plans[0].map(encAct),plans[1].map(encAct)]);}
 function recFinish(result){
@@ -3491,7 +3619,7 @@ async function unpackReplay(code){
   code=String(code||'').trim().replace(/^.*#replay=/,'');const k=code[0],body=b64u.dec(code.slice(1));let txt;
   if(k==='z'){const ds=new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate-raw'));txt=await new Response(ds).text();}
   else if(k==='j')txt=new TextDecoder().decode(body);else throw new Error('bad code');
-  const r=JSON.parse(txt);if(!r||r.v!==5||!Array.isArray(r.c)||!Array.isArray(r.t))throw new Error('bad replay');
+  const r=JSON.parse(txt);if(!r||r.v!==6||!Array.isArray(r.c)||!Array.isArray(r.t))throw new Error('bad replay');
   for(const c of r.c){if(!validCfg({frame:c[0],weapon:c[1],skills:c[2],ult:c[5]||undefined}))throw new Error('bad cfg');}
   return r;
 }
@@ -3522,7 +3650,7 @@ async function runReplay(r,c0,c1){
     rp.i=i;$('rbInfo').textContent='T'+pad2(i+1)+' / '+pad2(r.t.length);
     const p0=r.t[i][0].map(x=>decAct(x,c0)).filter(Boolean),p1=r.t[i][1].map(x=>decAct(x,c1)).filter(Boolean);
     UI.plan=p0;renderChips();await sleep(500);
-    await resolveTurn([p0.slice(0,16),p1.slice(0,16)]);UI.busy=true;
+    await resolveTurn([p0.slice(0,20),p1.slice(0,20)]);UI.busy=true;
   }
   if(UI.replay!==rp)return;
   if(rp.stop){endReplayUI();toSetup();return;}
@@ -3574,7 +3702,7 @@ function wireEdition(){
    of one browser play for testing.
    ═════════════════════════════════════════════════════════════ */
 const PEERJS_URLS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
-const NET_V=6,TURN_SEC=20,WAIT_GRACE=45;
+const NET_V=7,TURN_SEC=20,WAIT_GRACE=45;
 const NET={syncs:{},on:false,role:null,link:null,peer:null,code:null,rname:'',rcfg:null,mine:null,theirs:{},deadline:0,tick:null,dropped:false,rematch:{me:false,them:false},name:''};
 function netStatus(t,cls){const el=$('oStat');if(!el)return;el.textContent=t;el.className='lstat'+(cls?' '+cls:'');}
 function loadScript(urls){return new Promise((res,rej)=>{let i=0;const next=()=>{if(i>=urls.length)return rej(new Error('load failed'));const sc=document.createElement('script');sc.src=urls[i++];sc.onload=()=>res();sc.onerror=()=>{sc.remove();next();};document.head.appendChild(sc);};next();});}
@@ -3800,10 +3928,10 @@ const SKILL_CAT={BLINK:['移動','mv'],REWIND:['移動','mv'],SWAP:['移動','mv
 function mgCompute(kind,key){
   const save=S;const map=[...Array(N)].map(()=>Array(N).fill(0));
   let wall=null,enemy=null;
-  if(kind==='atk'&&['BOLT_RIFLE','RESONANCE','ARC_MORTAR'].includes(key)){wall={x:4,y:3};map[3][4]=1;}
+  if(kind==='atk'&&['BOLT_RIFLE','RESONANCE','ARC_MORTAR','HOWITZER'].includes(key)){wall={x:4,y:3};map[3][4]=1;}
   if(kind==='sk'&&key==='HOOK')enemy={x:6,y:3};
   if(kind==='sk'&&key==='SWAP')enemy={x:5,y:1};
-  S={map,wallHp:{},turn:1,units:[{side:0,alive:true,x:3,y:3},{side:1,alive:!!enemy,x:enemy?enemy.x:-9,y:enemy?enemy.y:-9}],mines:[],spikes:[],burns:[],mortars:[],orbitals:[],clusters:[]};
+  S={map,wallHp:{},turn:1,units:[{side:0,alive:true,x:3,y:3},{side:1,alive:!!enemy,x:enemy?enemy.x:-9,y:enemy?enemy.y:-9}],mines:[],spikes:[],burns:[],mortars:[],orbitals:[],shells:[]};
   try{
     let tgt,range;
     if(kind==='atk'){const W=WEAPONS[key];tgt=W.tgt;range=W.range;}
@@ -3815,12 +3943,12 @@ function mgCompute(kind,key){
     else if(tgt==='any'){for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(x!==3||y!==3)opts.push({x,y});}
     else opts=targetOptions(3,3,tgt,range,0);
     if(!opts.length)return {opts,ex:null,geo:{main:[],sub:[],push:[]},wall,enemy,extra:[]};
-    const pref=(['throw','lob','any','square'].includes(tgt))?{x:5,y:2}:tgt==='swap'?{x:5,y:1}:tgt==='hook'?{x:6,y:3}:{x:3+Math.min(range,3),y:3};
+    const pref=(['throw','lob','lob3','any','square'].includes(tgt))?{x:5,y:2}:tgt==='swap'?{x:5,y:1}:tgt==='hook'?{x:6,y:3}:{x:3+Math.min(range,3),y:3};
     let ex=opts.find(c=>c.x===pref.x&&c.y===pref.y);
     if(!ex){const row=opts.filter(c=>c.y===3&&c.x>3).sort((a,b)=>b.x-a.x);ex=row[0]||opts[0];}
     let geo=previewGeom(kind,key,3,3,ex.x,ex.y,false);
     if(kind==='sk'&&key==='SWAP')geo={main:[{x:5,y:1}],sub:[],push:[]};
-    let extra=[];if(kind==='ult'&&key==='PHANTOM_MIRAGE')extra=mirageDecoys({x:3,y:3},ex);
+    let extra=[];if(kind==='ult'&&key==='PHANTOM_MIRAGE')extra=[{x:3,y:3}];
     return {opts,ex,geo,wall,enemy,extra};
   }catch(e){return null;}
   finally{S=save;}
@@ -3888,6 +4016,8 @@ const KANA={ASSAULT:'アサルト',HEAVY:'ヘビー',GHOST:'ゴースト',ENGINE
   'COUNTER RUSH':'カウンターラッシュ',OVERDRIVE:'オーバードライブ','IRON WALL':'アイアンウォール','GIGA CANNON':'ギガキャノン',
   'PHANTOM MIRAGE':'ファントムミラージュ','STATIC HAUNT':'スタティックホーント','SYSTEM HACK':'システムハック','ORBITAL STRIKE':'オービタルストライク',
   COUNTER:'カウンター',MIRAGE:'ミラージュ',HAUNT:'ホーント',HACK:'ハック',ORBITAL:'オービタル',
+  BLADE:'ブレード',TRIG:'トリガー',RIFLE:'ライフル',SPIKE:'スパイク',CLUSTER:'クラスター',BNKR:'バンカー',DASH:'ダッシュ',SCY:'サイス',
+  KNUCKLE:'ナックル',SCATTER:'スキャッター',ROD:'ロッド',MORTAR:'モーター',HOWITZER:'ハウィッツァー',CANNON:'キャノン',HUNT:'ハント',STRIKE:'ストライク',
   DEFENSE:'ディフェンス',OFFENSE:'オフェンス',ADRENALINE:'アドレナリン',GUTS:'ガッツ',MOMENTUM:'モメンタム','QUICK LOAD':'クイックロード'};
 function rb(name){const k=KANA[name];return k?'<ruby>'+esc(name)+'<rt>'+k+'</rt></ruby>':esc(name);}
 const STARTERS=[
