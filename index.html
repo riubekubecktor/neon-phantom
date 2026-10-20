@@ -835,7 +835,7 @@ const ULTS={
   GIGA_CANNON:   {name:'CANNON',   frame:'HEAVY',   tgt:'dir4',  role:'OFFENSE',desc:'縦か横の一列を壁ごと撃ち抜いて60ダメージ。撃ったターンは移動できない'},
   PHANTOM_MIRAGE:{name:'MIRAGE',frame:'GHOST',   tgt:'none',  role:'DEFENSE',desc:'その場に分身を出す。本体と分身はそれぞれ移動・攻撃・スキルを予約でき、BITは各自-2。スキルはどちらかが使えばCD。分身はダメージを受けるまで残り、相手にはどちらが本体か分からない'},
   STATIC_HAUNT:  {name:'HUNT',  frame:'GHOST',   tgt:'none',  role:'OFFENSE',desc:'相手に呪い。このターンと次のターン、ターン開始位置の周囲1マス以内でターンを終えると80ダメージ'},
-  SYSTEM_HACK:   {name:'HACK',   frame:'ENGINEER',tgt:'none',  role:'DEFENSE',desc:'予約しても相手には見えない。相手の予約が確定した瞬間に侵入し、相手の全行動を見てから自分の行動を組み直せる'},
+  SYSTEM_HACK:   {name:'HACK',   frame:'ENGINEER',tgt:'none',  role:'DEFENSE',desc:'予約しても相手には見えない。相手の予約が確定した瞬間に侵入し、相手の全行動を見てから15秒で自分の行動を組み直せる'},
   ORBITAL_STRIKE:{name:'STRIKE',frame:'ENGINEER',tgt:'any',   role:'OFFENSE',desc:'盤面のどこでも5×5を指定。次のターンの全行動の後に着弾して60ダメージ（予告は相手にも見える）'},
 };
 const ULT_SHORT={COUNTER_RUSH:'COUNTER',OVERDRIVE:'OVERDRIVE',IRON_WALL:'IRON WALL',GIGA_CANNON:'CANNON',PHANTOM_MIRAGE:'MIRAGE',STATIC_HAUNT:'HUNT',SYSTEM_HACK:'HACK',ORBITAL_STRIKE:'STRIKE'};
@@ -3299,7 +3299,7 @@ function refreshHUD(){
   {const cd=$('cdown');if(cd){const on=S.phase==='plan'&&left!=null&&left<=5&&left>0&&!S.over;const v=on?String(left):'';if(cd.dataset.v!==v){cd.dataset.v=v;cd.textContent=v;cd.classList.remove('pop');if(on){void cd.offsetWidth;cd.classList.add('pop');}}cd.classList.toggle('on',on);}}
   const tp=$('tPh');tp.textContent=S.over?'END':S.phase==='wait'?'WAIT':S.phase==='plan'?((UI.hack?'HACK':'PLAN')+(left!=null?' '+left:'')):'EXECUTE';tp.classList.toggle('ex',S.phase!=='plan');
   tp.classList.toggle('urg',S.phase==='plan'&&left!=null&&left<=5);
-  {const tb=$('tbar');if(tb){const on=S.phase==='plan'&&dl&&!S.over;tb.style.width=on?(clamp((dl-Date.now())/(TURN_SEC*1000),0,1)*100)+'%':'0';tb.classList.toggle('urg',on&&left<=5);}}tp.classList.toggle('hk',!!UI.hack&&S.phase==='plan');
+  {const tb=$('tbar');if(tb){const on=S.phase==='plan'&&dl&&!S.over;tb.style.width=on?(clamp((dl-Date.now())/((UI.hack&&UI.clockSec?UI.clockSec:TURN_SEC)*1000),0,1)*100)+'%':'0';tb.classList.toggle('urg',on&&left<=5);}}tp.classList.toggle('hk',!!UI.hack&&S.phase==='plan');
   updateHpBars();
 }
 function chipLabel(a,u){
@@ -3471,7 +3471,7 @@ function finishMatch(){
   if(!UI.replay)recFinish(a&&!b?'win':!a&&b?'lose':'draw');
   S.over=true;S.phase='over';refreshAll();setTimeout(()=>showResult(a&&!b?'win':!a&&b?'lose':'draw'),1500/SPEED);
 }
-function planClock(sec){UI.deadline=(UI.replay||NET.on)?0:Date.now()+(sec||TURN_SEC)*1000;}
+function planClock(sec){UI.clockSec=sec||TURN_SEC;UI.deadline=(UI.replay||NET.on)?0:Date.now()+(sec||TURN_SEC)*1000;}
 function cpuTick(){
   if(UI.screen!=='game'||!S||S.over||NET.on||UI.replay||!UI.deadline)return;
   if(S.phase!=='plan'||UI.busy)return;
@@ -3488,7 +3488,7 @@ function startHack(enemy){
   showHackCutin(0);
   log('<span class="w">SYSTEM HACK</span> — 相手の予約を取得。行動を組み直せる','p0');
   log(tagName(1)+' の予約: '+(enemy.length?enemy.map(a=>chipLabel(a,S.units[1]).t+(a.type==='move'?'':'')).map((t,i)=>enemy[i].type==='move'?'MOVE '+t:t).join(' / '):'待機'),'p1');
-  if(NET.on)NET.deadline=Date.now()+TURN_SEC*1000;else planClock();
+  UI.clockSec=HACK_SEC;if(NET.on)NET.deadline=Date.now()+HACK_SEC*1000;else planClock(HACK_SEC);
   refreshAll();
 }
 async function finishHack(){
@@ -3704,7 +3704,7 @@ function wireEdition(){
    of one browser play for testing.
    ═════════════════════════════════════════════════════════════ */
 const PEERJS_URLS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
-const NET_V=8,TURN_SEC=20,WAIT_GRACE=45;
+const NET_V=8,TURN_SEC=20,HACK_SEC=15,WAIT_GRACE=45;
 const NET={syncs:{},on:false,role:null,link:null,peer:null,code:null,rname:'',rcfg:null,mine:null,theirs:{},deadline:0,tick:null,dropped:false,rematch:{me:false,them:false},name:''};
 function netStatus(t,cls){const el=$('oStat');if(!el)return;el.textContent=t;el.className='lstat'+(cls?' '+cls:'');}
 function loadScript(urls){return new Promise((res,rej)=>{let i=0;const next=()=>{if(i>=urls.length)return rej(new Error('load failed'));const sc=document.createElement('script');sc.src=urls[i++];sc.onload=()=>res();sc.onerror=()=>{sc.remove();next();};document.head.appendChild(sc);};next();});}
