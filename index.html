@@ -266,6 +266,20 @@ button:disabled{cursor:not-allowed}
 #hint{display:block;padding:5px 10px 4px 12px;font:400 16px/1.15 var(--fv);letter-spacing:.04em;color:#dff6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(90deg,rgba(0,240,255,.08),transparent);pointer-events:none;border-top:1px solid rgba(0,240,255,.25)}
 #hint b{color:var(--y);font-weight:400}
+#apWhy{display:flex;flex-direction:column;gap:1px;flex:none;font:400 12px/1 var(--fv);letter-spacing:.02em;white-space:nowrap}
+#apWhy:empty{display:none}
+#apWhy .up{color:var(--n-hp)}#apWhy .dn{color:var(--n-dmg)}
+/* during EXECUTE the hint bar reads out what just happened (the log is off-screen on phones) */
+#hint.live{color:#fff;background:linear-gradient(90deg,rgba(255,225,77,.12),transparent)}
+#hint.live .tt{display:none}
+@media (max-width:560px){
+  #hint{white-space:normal;font-size:14px;line-height:1.15;height:calc(2.3em + 9px);display:flex;align-items:center;overflow:hidden}
+  .sfoot{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px;background:#04050b!important;border-top:1px solid #1d2a4a;padding:8px 0 10px!important;margin-top:10px}
+  .sfoot #bStart{grid-column:1/-1;order:-1}
+  .sfoot .btn:not(#bStart)>.in{padding:5px 2px;min-height:0}
+  .sfoot .btn:not(#bStart) .bt{font-size:9px;letter-spacing:.06em}
+  .sfoot .btn:not(#bStart) .bs{font-size:12px}
+}
 .chip.k-d{color:#e0b3ff;border-color:rgba(199,125,255,.55)!important;background:rgba(199,125,255,.12)!important}
 /* last-5-seconds countdown over the board */
 #cdown{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;opacity:0;font:900 clamp(64px,22vw,150px)/1 Orbitron,var(--fv),sans-serif;color:#ff3d7a;text-shadow:0 0 18px rgba(255,42,138,.85),0 0 46px rgba(255,42,138,.45),0 4px 0 #3a0018;-webkit-text-stroke:2px rgba(255,255,255,.55);transition:opacity .15s}
@@ -574,7 +588,7 @@ header.title{position:relative}
       </div></div>
       <div class="plate" id="qbar"><div class="in">
         <div class="apm"><span>BIT</span><b id="apL">0</b><em>/<span id="apM" style="font:inherit;letter-spacing:0;color:inherit">0</span></em></div>
-        <div id="chips"></div>
+        <div id="apWhy"></div><div id="chips"></div>
       </div></div>
       <div id="ctrl">
         <button class="btn b-cyan" id="bMove"><span class="in"><span class="bt">MOVE</span><span class="bs" id="bMoveS">1BIT / マス</span></span></button>
@@ -582,7 +596,7 @@ header.title{position:relative}
         <button class="btn b-grn" id="bSk0"><span class="in"><span class="bt" id="sk0N">SKILL</span><span class="bs" id="sk0S">—</span><span class="cdv" id="sk0C"></span></span></button>
         <button class="btn b-grn" id="bSk1"><span class="in"><span class="bt" id="sk1N">SKILL</span><span class="bs" id="sk1S">—</span><span class="cdv" id="sk1C"></span></span></button>
         <button class="btn b-ult" id="bUlt"><span class="in"><span class="bt" id="ultN">ULT</span><span class="bs" id="ultS">—</span><span class="ugf"></span></span></button>
-        <button class="btn b-dim ghost" id="bUndo"><span class="in"><span class="bt">UNDO</span><span class="bs">1つ戻す</span></span></button>
+        <button class="btn b-dim ghost" id="bUndo"><span class="in"><span class="bt">UNDO</span><span class="bs">戻す</span></span></button>
         <button class="btn b-mag ghost" id="bReset"><span class="in"><span class="bt">RESET</span><span class="bs">全消去</span></span></button>
         <button class="btn b-exec" id="bExec"><span class="in"><span class="bt">EXECUTE ▶▶</span><span class="bs">同時実行</span></span></button>
       </div>
@@ -1307,7 +1321,7 @@ function doSkill(u,a){
       break;}
     case 'SHIELD':u.shield=S.turn+1;ev('fx',{type:'shield',x:u.x,y:u.y,side:u.side});break;
     case 'REPAIR':ev('fx',{type:'repair',x:u.x,y:u.y,side:u.side});healUnit(u,REPAIR_HP,'REPAIR');break;
-    case 'JAMMER':o.nextApMod-=3;ev('fx',{type:'jam',x:o.x,y:o.y,side:o.side});ev('status',{side:o.side,text:'BIT-3 NEXT'});break;
+    case 'JAMMER':o.nextApMod-=3;(o.apNotes=o.apNotes||[]).push('JAMMER -3');ev('fx',{type:'jam',x:o.x,y:o.y,side:o.side});ev('status',{side:o.side,text:'BIT-3 NEXT'});break;
     case 'HOOK':{
       const k=dirIndex(a.rx,a.ry),[dx,dy]=DIR8[k];u.facing=k;
       let x=u.x+dx,y=u.y+dy,hitU=null;const path=[];
@@ -1320,7 +1334,7 @@ function doSkill(u,a){
         else{const from={x:hitU.x,y:hitU.y};hitU.x=fx;hitU.y=fy;ev('knock',{side:hitU.side,from,to:{x:fx,y:fy},hook:true,...tk(hitU)});onEnter(hitU);}
       }else ev('miss',{side:u.side});
       break;}
-    case 'CHARGE':(u.owner||u).nextApMod+=4;ev('fx',{type:'charge',x:u.x,y:u.y,side:u.side});break;
+    case 'CHARGE':(u.owner||u).nextApMod+=4;((u.owner||u).apNotes=(u.owner||u).apNotes||[]).push('CHARGE +4');ev('fx',{type:'charge',x:u.x,y:u.y,side:u.side});break;
     case 'X_RAY':u.xray=true;ev('fx',{type:'xray',x:u.x,y:u.y,side:u.side});break;
     case 'WALL_GEN':{
       const tx=u.x+a.rx,ty=u.y+a.ry;
@@ -1352,7 +1366,7 @@ function doSkill(u,a){
     case 'SMOKE':{const tx=u.x+a.rx,ty=u.y+a.ry;if(!inB(tx,ty)){ev('fail',{side:u.side,text:'NO TARGET'});break;}
       S.smokes=S.smokes.filter(m=>m.owner!==u.side);S.smokes.push({x:tx,y:ty,owner:u.side,expire:S.turn+1});ev('smokeSet',{x:tx,y:ty,side:u.side});break;}
     case 'OVERCLOCK':u.overclock=true;ev('fx',{type:'overclock',x:u.x,y:u.y,side:u.side});break;
-    case 'SILENCE':o.silencedTurn=S.turn+1;o.nextApMod-=SILENCE_AP;
+    case 'SILENCE':o.silencedTurn=S.turn+1;o.nextApMod-=SILENCE_AP;(o.apNotes=o.apNotes||[]).push('SILENCE -'+SILENCE_AP);
       if(o.shield||o.reflect||o.anchor||o.overclock||o.xray){o.shield=false;o.reflect=false;o.anchor=false;o.overclock=false;o.xray=false;ev('status',{side:o.side,text:'BUFFS PURGED'});}ev('fx',{type:'silence',x:o.x,y:o.y});ev('status',{side:o.side,text:'SILENCED NEXT'});break;
   }
 }
@@ -1448,7 +1462,8 @@ function startTurn(){
     u.sx=u.x;u.sy=u.y;
     const adr=u.frame==='ASSAULT'&&u.alive&&u.hp<=u.maxHp*.4?ADR_BIT:0;
     u.ap=clamp(u.baseAp+adr+u.nextApMod,0,AP_CAP);u.nextApMod=0;u.adrenaline=!!adr;
-    u.overheat=false;if(u.odNext){u.ap=Math.min(u.ap,OD_NEXT);u.odNext=false;u.overheat=true;}
+    u.apWhy=(u.apNotes||[]).slice();u.apNotes=[];if(adr)u.apWhy.push('ADRENALINE +'+ADR_BIT);
+    u.overheat=false;if(u.odNext){u.ap=Math.min(u.ap,OD_NEXT);u.odNext=false;u.overheat=true;u.apWhy.push('OVERHEAT 上限'+OD_NEXT);}
     addGauge(u,G_TURN);
   }
   return det;
@@ -1931,6 +1946,7 @@ function log(html,cls){
   d.innerHTML='<span class="tt">T'+pad2(S?S.turn:0)+'</span>'+html;
   el.appendChild(d);while(el.children.length>220)el.removeChild(el.firstChild);
   el.scrollTop=el.scrollHeight;
+  if(S&&S.phase==='exec'&&cls!=='sys'){const h=$('hint');if(h){h.classList.add('live');h.innerHTML=html;}}
 }
 
 function handleEvent(type,d){
@@ -2552,8 +2568,8 @@ function drawThreat(g,t){
   const col='#ff2a8a';
   g.save();
   for(const k of th){const [x,y]=k.split(',').map(Number);const px=x*C,py=y*C;
-    g.fillStyle=hexA(col,.07);g.fillRect(px+1,py+1,C-2,C-2);
-    g.save();g.beginPath();g.rect(px+1,py+1,C-2,C-2);g.clip();g.strokeStyle=hexA(col,.16);g.lineWidth=1;
+    g.fillStyle=hexA(col,.05);g.fillRect(px+1,py+1,C-2,C-2);
+    g.save();g.beginPath();g.rect(px+1,py+1,C-2,C-2);g.clip();g.strokeStyle=hexA(col,.1);g.lineWidth=1;
     const off=(t*.012)%(C*.25);for(let i=-C;i<C*2;i+=C*.25){g.beginPath();g.moveTo(px+i+off,py+C);g.lineTo(px+i+off+C,py);g.stroke();}
     g.restore();}
   g.restore();
@@ -3277,6 +3293,7 @@ function refreshHUD(){
   if(!total)h='<i class="pip off"></i>';
   apEl.innerHTML=h;
   $('apL').textContent=Math.max(0,total-used);$('apM').textContent=total;
+  {const w=$('apWhy');if(w){const show=S.phase==='plan'&&u0.apWhy&&u0.apWhy.length;w.innerHTML=show?u0.apWhy.map(t=>'<span class="'+(/\+/.test(t)?'up':'dn')+'">'+esc(t)+'</span>').join(''):'';}}
   $('tNum').textContent=pad2(S.turn);
   const dl=NET.on?NET.deadline:UI.deadline,left=dl?Math.max(0,Math.ceil((dl-Date.now())/1000)):null;
   {const cd=$('cdown');if(cd){const on=S.phase==='plan'&&left!=null&&left<=5&&left>0&&!S.over;const v=on?String(left):'';if(cd.dataset.v!==v){cd.dataset.v=v;cd.textContent=v;cd.classList.remove('pop');if(on){void cd.offsetWidth;cd.classList.add('pop');}}cd.classList.toggle('on',on);}}
@@ -3296,7 +3313,7 @@ function chipLabel(a,u){
 function renderChips(){
   const el=$('chips');if(!el||!S)return;
   const plan=S.phase==='plan'?UI.plan:(UI.execPlan||[]);const u=S.units[0];
-  if(!plan.length){el.innerHTML='<span class="qempty">'+(S.phase==='plan'?'行動を予約（空のまま実行＝待機）':'—')+'</span>';return;}
+  if(!plan.length){el.innerHTML='<span class="qempty">'+(S.phase==='plan'?'行動を予約（空なら待機）':'—')+'</span>';return;}
   let h='';plan.forEach((a,i)=>{const L=chipLabel(a,u);const st=S.phase!=='plan'?(i<UI.stepIdx?' done':i===UI.stepIdx?' run':''):'';
     h+='<span class="chip k-'+L.k+st+'"><i>'+pad2(i+1)+'</i>'+(L.s?'MOVE ':'')+L.t+'</span>';});
   el.innerHTML=h;
@@ -3360,6 +3377,8 @@ function refreshButtons(){
 }
 function setHint(){
   const el=$('hint');if(!el||!S)return;
+  if(S.phase==='exec'&&el.classList.contains('live'))return;
+  el.classList.remove('live');
   if(S.over){el.innerHTML='<b>MATCH OVER</b>';return;}
   if(S.phase==='wait'){el.innerHTML='<b>LOCKED</b> — 相手の予約を待っています…';return;}
   if(S.phase!=='plan'){el.innerHTML='<b>EXECUTE</b> — 両者の行動を同時解決中…';return;}
@@ -3513,7 +3532,8 @@ async function resolveTurn(plans){
     V.cursor=now();r=gen.next();
   }
   if(S.over)finishMatch();
-  else{const u=S.units[0];if(u.adrenaline)log(tagName(0)+' <span class="w">ADRENALINE: BIT+'+ADR_BIT+'</span>','p0');}
+  else{const u=S.units[0];if(u.adrenaline)log(tagName(0)+' <span class="w">ADRENALINE: BIT+'+ADR_BIT+'</span>','p0');
+    if(u.apWhy&&u.apWhy.length)toast('BIT '+u.ap+' — '+u.apWhy.join(' / '));}
   UI.busy=false;
   if(!NET.on&&!S.over&&!UI.replay)planClock();
   refreshAll();
