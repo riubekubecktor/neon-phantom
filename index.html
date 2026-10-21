@@ -491,6 +491,21 @@ header.title{position:relative}
 .rt::before{color:var(--m);animation:gl1 2.4s infinite steps(1)}
 .rt::after{color:var(--c);animation:gl2 2s infinite steps(1)}
 .rs{margin-top:10px;font-size:14px;color:var(--dim)}
+.tone{display:flex;align-items:center;gap:8px;margin:8px 0 2px}
+.tone>span{font:700 9px var(--fo);letter-spacing:.2em;color:var(--dim);width:44px;flex:none}
+.tone em{font:400 13px var(--fv);color:var(--dim);font-style:normal;margin-left:auto;flex:none}
+.sws{display:flex;flex-wrap:wrap;gap:4px}
+.sw{width:18px;height:18px;border:1px solid rgba(255,255,255,.18);cursor:pointer;padding:0;position:relative}
+.sw.on{outline:2px solid #fff;outline-offset:1px}
+.sw.lock{background:repeating-linear-gradient(45deg,#121a30 0 3px,#0b1020 3px 6px)!important;cursor:default;opacity:.6}
+.sw.r3::after{content:'';position:absolute;inset:-3px;border:1px solid #ffd23a;pointer-events:none}
+.rdrop{display:flex;align-items:center;gap:12px;margin:-4px 0 16px;padding:10px 12px;background:rgba(255,255,255,.04);border-left:3px solid var(--rc,#9fb3d6);text-align:left}
+.rdrop canvas{width:88px;height:88px;flex:none;image-rendering:pixelated}
+.rdrop .rk{font:700 10px var(--fo);letter-spacing:.2em;color:var(--rc)}
+.rdrop .rn{font:900 18px var(--fo);letter-spacing:.08em;color:#fff;margin:2px 0}
+.rdrop .rj{font:400 14px var(--fv);color:var(--dim)}
+.rdrop button{margin-top:6px;font:400 14px var(--fv);color:#02030a;background:var(--rc);border:0;padding:3px 10px;cursor:pointer}
+.rdrop button:disabled{opacity:.5;cursor:default}
 .rstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:16px 0 18px}
 .rstats div{background:#0a1226;padding:8px 4px 6px}
 .rstats span{display:block;font:700 9px var(--fo);letter-spacing:.15em;color:var(--dim)}
@@ -525,6 +540,7 @@ header.title{position:relative}
         <div class="stat"><span>HP</span><div class="bar hpb"><i id="pvHp"></i></div><b id="pvHpN">100</b></div>
         <div class="stat"><span>MOVE</span><div class="bar apb"><i id="pvAp"></i></div><b id="pvApN">5</b></div>
         <div class="stat"><span>DMG</span><div class="bar"><i id="pvDmg"></i></div><b id="pvDmgN">30</b></div>
+        <div class="tone"><span>COLOR</span><div class="sws" id="toneSw"></div><em id="toneCnt"></em></div>
         <div class="pvmg"><canvas id="pvMg" width="252" height="252"></canvas><div class="mgleg"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例：右を狙った時）</span><span><i class="b"></i>爆風・追加ダメージ</span><span><i class="w"></i>壁</span></div></div>
         <div class="pvpas" id="pvPas"></div>
         <div class="loadout">
@@ -636,6 +652,7 @@ header.title{position:relative}
       <div><span>DEALT</span><b id="rDealt">0</b></div>
       <div><span>TAKEN</span><b id="rTaken">0</b></div>
     </div>
+    <div class="rdrop" id="rDrop" hidden></div>
     <div class="rbtns">
       <button class="btn b-exec" id="bRematch"><span class="in"><span class="bt">REMATCH</span><span class="bs">同じ相手・新マップ</span></span></button>
       <button class="btn b-cyan" id="bLoadout"><span class="in"><span class="bt">LOADOUT</span><span class="bs">構成を変える</span></span></button>
@@ -870,7 +887,7 @@ function makeUnit(side,cfg,pos){
     x:pos[0],y:pos[1],sx:pos[0],sy:pos[1],hp:f.hp,maxHp:f.hp,baseAp:f.ap,ap:f.ap,mv:f.mv||N,nextApMod:0,
     shield:false,stunned:false,xray:false,reflect:false,anchor:false,overclock:false,silencedTurn:-1,gutsUsed:false,moveDist:0,
     facing:side===0?7:3,alive:true,revealed:[],canceled:false,backstep:false,parryUntil:-1,fort:false,
-    ult:(ULTS[cfg.ult]&&ULTS[cfg.ult].frame===cfg.frame)?cfg.ult:ULT_OF(cfg.frame)[0],gauge:0,ultUsed:false,counter:null,iron:false,odNext:false,overheat:false,lockMv:0,haunt:null};
+    tone:TONES[cfg.tone]?cfg.tone:null,ult:(ULTS[cfg.ult]&&ULTS[cfg.ult].frame===cfg.frame)?cfg.ult:ULT_OF(cfg.frame)[0],gauge:0,ultUsed:false,counter:null,iron:false,odNext:false,overheat:false,lockMv:0,haunt:null};
 }
 
 /* Dig a maze (recursive backtracker), then knock down walls until only a
@@ -1869,7 +1886,52 @@ function aiPlanCore(side,opt){
    ═════════════════════════════════════════════════════════════ */
 const V={u:[null,null],dv:[null,null],fx:[],parts:[],floats:[],decals:[],shake:0,banner:null,cursor:0,hp:[0,0],hpG:[0,0],sflash:null,hitstop:0};
 const UI={screen:'setup',mode:null,cells:[],sel:null,hover:null,plan:[],busy:false,stepIdx:-1,execPlan:null,touch:false,lastToast:0};
-let CFG={frame:'ASSAULT',weapon:'NEON_BLADE',skills:['BLINK','SHIELD'],ult:'COUNTER_RUSH'};
+let CFG={frame:'ASSAULT',weapon:'NEON_BLADE',skills:['BLINK','SHIELD'],ult:'COUNTER_RUSH',tone:null};
+/* COLOR items: one drops after every battle. A tone recolours any frame (accents get the new hue; whites, greys and blacks stay). */
+const TONES={
+  CRIMSON:{kana:'クリムゾン',rar:1,h:355,sw:'#ff3048'},  SUNSET:{kana:'サンセット',rar:1,h:24,sw:'#ff8a2a'},
+  CITRUS:{kana:'シトラス',rar:1,h:54,sw:'#ffe14d'},      VIPER:{kana:'ヴァイパー',rar:1,h:130,sw:'#3dff6a'},
+  AQUA:{kana:'アクア',rar:1,h:180,sw:'#2df0e0'},         COBALT:{kana:'コバルト',rar:1,h:222,sw:'#3d6bff'},
+  VIOLET:{kana:'バイオレット',rar:1,h:275,sw:'#a45cff'},  SAKURA:{kana:'サクラ',rar:1,h:330,sw:'#ff7ac8'},
+  MIDNIGHT:{kana:'ミッドナイト',rar:2,dark:true,sw:'#2a2f45'}, ARCTIC:{kana:'アークティック',rar:2,h:200,s:.35,l:1.12,sw:'#bfe6ff'},
+  GOLD:{kana:'ゴールド',rar:2,h:44,s:1.05,tint:[255,207,106],sw:'#ffc93a'}, MONO:{kana:'モノクローム',rar:2,s:0,sw:'#9a9a9a'},
+  NEGATIVE:{kana:'ネガティブ',rar:3,neg:true,sw:'#e6ff3a'}, HOLO:{kana:'ホログラム',rar:3,holo:true,sw:'linear-gradient(135deg,#ff5ab4,#ffe14d,#3dff9a,#3db4ff,#b45aff)'},
+};
+const RARITY=[null,{n:'COMMON',w:10,c:'#9fb3d6'},{n:'RARE',w:4,c:'#3db4ff'},{n:'EPIC',w:1,c:'#ffd23a'}];
+function ownedTones(){const o=store('tones');return Array.isArray(o)?o.filter(k=>TONES[k]):[];}
+function validTone(k){return k&&TONES[k]?k:null;}
+/* one random colour per battle, never one you already have */
+function dropTone(){
+  const own=new Set(ownedTones()),pool=Object.keys(TONES).filter(k=>!own.has(k));if(!pool.length)return null;
+  let tot=0;for(const k of pool)tot+=RARITY[TONES[k].rar].w;let r=Math.random()*tot,pick=pool[0];
+  for(const k of pool){r-=RARITY[TONES[k].rar].w;if(r<=0){pick=k;break;}}
+  own.add(pick);store('tones',[...own]);return pick;
+}
+function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;}return [h,s,l];}
+function hsl2rgb(h,s,l){h=((h%360)+360)%360/360;if(!s){const v=l*255;return [v,v,v];}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+  const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};return [f(h+1/3)*255,f(h)*255,f(h-1/3)*255];}
+function tonePixel(T,r,g,b,fx,fy){
+  let [h,sat,l]=rgb2hsl(r,g,b);if(l<.07)return [r,g,b];
+  const accent=sat>.1&&l>.12;
+  if(T.neg){if(accent)h+=180;else l=.25+.55*(1-l);}
+  else if(T.holo){if(accent||l>.55){h=(fy*280+fx*80)%360;sat=Math.max(sat,.6);}}
+  else{
+    if(T.dark&&!accent)l*=.38;else if(T.dark)l=Math.min(1,l*1.08);
+    if(accent&&T.h!=null){h=T.h;if(T.s==null)sat=Math.max(sat,.42);}
+    if(T.s!=null)sat=accent?Math.min(1,sat*T.s):(T.s===0?0:sat);
+    if(T.l)l=Math.min(1,l*T.l);
+  }
+  let o=hsl2rgb(h,sat,l);
+  if(T.tint&&!accent){const k=.35*l;o=[o[0]*(1-k)+T.tint[0]*k,o[1]*(1-k)+T.tint[1]*k,o[2]*(1-k)+T.tint[2]*k];}
+  return o;
+}
+/* which tone a palette should wear: in battle the unit's, on the setup screen yours */
+function toneFor(pal){
+  if(!pal||pal.flat||pal.side==null)return null;
+  if(UI.screen==='game'&&S&&S.units&&S.units[pal.side])return validTone(S.units[pal.side].tone);
+  return pal.side===0?validTone(CFG.tone):null;
+}
 let RIVAL=null;
 let board,bctx,C=40,BW=320,DPR=1,TOP=0;   // TOP: headroom strip above row 0 so tall mechs aren't clipped
 
@@ -2175,6 +2237,7 @@ function artVariant(rec,mode,col){
     for(let i=0;i<D.length;i+=4){if(!D[i+3])continue;let r=D[i],gg=D[i+1],b=D[i+2];
       if(mode==='stun'){const l=r*.3+gg*.59+b*.11;r=l*.55+108*.45;gg=l*.55+118*.45;b=l*.55+150*.45;}
       else if(mode==='dead'){const l=(r*.3+gg*.59+b*.11)*.42;r=l+14;gg=l+16;b=l+24;}
+      else if(mode.startsWith('t:')){const T=TONES[mode.slice(2)];if(T){const q=i>>2;[r,gg,b]=tonePixel(T,r,gg,b,(q%W)/W,Math.floor(q/W)/H);}}
       else if(mode==='alt'){ // hue-rotate ~160° so a mirror match stays readable
         const cs=Math.cos(2.8),sn=Math.sin(2.8);
         const m=[.213+cs*.787-sn*.213,.715-cs*.715-sn*.715,.072-cs*.072+sn*.928,.213-cs*.213+sn*.143,.715+cs*.285+sn*.14,.072-cs*.072-sn*.283,.213-cs*.213-sn*.787,.715-cs*.715+sn*.715,.072+cs*.928+sn*.072];
@@ -2211,6 +2274,7 @@ function drawMech(g,frame,weapon,pal,cx,cy,size,flip,t,o){
   let mode='n',col=null;
   if(pal.flat){mode=o.rim?'rim':'sil';col=pal.base;}
   else if(o.dead)mode='dead';else if(o.stun)mode='stun';else if(o.alt)mode='alt';
+  if(mode==='n'){const tn=o.tone!==undefined?validTone(o.tone):toneFor(pal);if(tn)mode='t:'+tn;}
   const img=artVariant(rec,mode,col);
   const tr=g.getTransform(),sc=Math.hypot(tr.a,tr.b)||1;
   const refH=o.port?rec.h:rec.sheet?rec.refH*1.05:MINI_H;
@@ -2666,7 +2730,7 @@ function drawDecoy(g,u,s,c,t,dt){
   g.setLineDash([C*.13,C*.07]);g.lineDashOffset=t*.02*(s?-1:1);g.strokeStyle=hexA(col,.9);g.lineWidth=2.4;g.stroke();g.setLineDash([]);
   g.rotate(t*.002*(s?-1:1));g.strokeStyle=hexA('#ffffff',.5);g.lineWidth=2;g.beginPath();g.arc(0,0,C*.47,0,.8);g.stroke();g.beginPath();g.arc(0,0,C*.47,Math.PI,Math.PI+.8);g.stroke();g.restore();
   const shift=((t+s*1700)%5200)<520;
-  const alt=s===1&&S.units[0].frame===S.units[1].frame;
+  const alt=s===1&&S.units[0].frame===S.units[1].frame&&(S.units[0].tone||'')===(S.units[1].tone||'');
   drawMech(g,u.frame,u.weapon,RIMPAL[s],px,py-C*.05,C*1.02,flip,t,{alpha:(own?.5:1)*(.34+.12*Math.sin(t*.004+s)),noGlow:true,rim:true,seed:s*2,state:shift?'walk':'idle',pose:shift?1:0,dir});
   drawMech(g,u.frame,u.weapon,PAL[s][u.frame],px,py-C*.05,C*1.02,flip,t,{alpha:own?.5:1,seed:s*2,reflect:true,state:shift?'walk':'idle',pose:shift?1:0,dir,alt});
   const bw=C*.62,bx=px-bw/2,by=Math.max(2,py-C*.8);g.fillStyle='rgba(0,0,0,.75)';g.fillRect(bx-1,by-1,bw+2,5);
@@ -2733,7 +2797,7 @@ function drawUnits(g,t,dt){
       else if(((t+s*1700)%5200)<520){state='walk';pose=1;}
       if(u.stunned){state='hit';lean=Math.sin(t*.018)*.09;}
     }
-    const alt=s===1&&S.units[0].frame===S.units[1].frame;
+    const alt=s===1&&S.units[0].frame===S.units[1].frame&&(S.units[0].tone||'')===(S.units[1].tone||'');
     const py=p.y-C*.05+hop;
     for(const q of vu.trail){const a=1-(now()-q.t0)/280;drawMech(g,u.frame,u.weapon,RIMPAL[s],(q.x+.5)*C,(q.y+.5)*C-C*.05,C*1.02,vu.flip,t,{alpha:.3*a,noGlow:true,seed:s*2,pose,state:'walk',dir});}
     // rim silhouette (feeds the bloom → neon outline)
@@ -3604,7 +3668,7 @@ function renderPresets(){
 /* ── replays: seed + both players' plans. The engine is deterministic,
       so a whole match fits in a short URL. ── */
 let REC=null,LAST_REPLAY=null;
-function cfgRow(c){return [c.frame,c.weapon,c.skills.slice(0,2),String(c.name||''),String(c.mech||''),String(c.ult||'')];}
+function cfgRow(c){return [c.frame,c.weapon,c.skills.slice(0,2),String(c.name||''),String(c.mech||''),String(c.ult||''),String(c.tone||'')];}
 function recStart(seed,c0,c1,mirror){REC={v:7,s:seed>>>0,m:mirror?1:0,c:[cfgRow(c0),cfgRow(c1)],t:[],d:Date.now(),on:NET.on?1:0};}
 function encAct(a){const c=a.type==='move'?[0,a.dx,a.dy]:a.type==='attack'?[1,a.rx,a.ry]:a.type==='ult'?[3,a.rx||0,a.ry||0]:a.type==='unfort'?[4]:[2,a.slot,a.rx||0,a.ry||0];if(a.d)c[0]+=10;return c;}
 function decAct(x,cfg){if(!Array.isArray(x)||!x.length||!x.every(v=>Number.isInteger(v)))return null;const t=x[0]%10,dk=x[0]>=10;if(x.slice(1).some(v=>Math.abs(v)>=N))return null;
@@ -3639,7 +3703,7 @@ async function shareReplay(r){
   try{await navigator.clipboard.writeText(url);toast('リプレイURLをコピー（'+url.length+'文字）');}catch(e){prompt('リプレイURL',url);}
 }
 function startReplay(r){
-  const cf=i=>({frame:r.c[i][0],weapon:r.c[i][1],skills:r.c[i][2].slice(),ult:r.c[i][5]||undefined,name:cleanName(r.c[i][3])||(i?'RIVAL':'PLAYER'),mech:cleanName(r.c[i][4]||'')});
+  const cf=i=>({frame:r.c[i][0],weapon:r.c[i][1],skills:r.c[i][2].slice(),ult:r.c[i][5]||undefined,tone:validTone(r.c[i][6]),name:cleanName(r.c[i][3])||(i?'RIVAL':'PLAYER'),mech:cleanName(r.c[i][4]||'')});
   const c0=cf(0),c1=cf(1);
   if(NET.on)netLeave(true);
   UI.replay={data:r,i:0,stop:false,speed:2};SPEED=2;
@@ -3752,7 +3816,7 @@ async function netJoin(){
   peer.on('open',()=>{const conn=peer.connect('npx-'+code.toLowerCase(),{reliable:true});
     conn.on('open',()=>{NET.link=linkPeer(conn);NET.link.attach();netSend({t:'hello',v:NET_V,name:NET.name,cfg:myCfg()});netStatus('接続しました… 準備中','ok');});});
 }
-function myCfg(){return {frame:CFG.frame,weapon:CFG.weapon,skills:CFG.skills.slice(),ult:CFG.ult,mech:myMech()};}
+function myCfg(){return {frame:CFG.frame,weapon:CFG.weapon,skills:CFG.skills.slice(),ult:CFG.ult,tone:validTone(CFG.tone),mech:myMech()};}
 function pilotName(){let n=($('oName').value||'').trim().toUpperCase().replace(/[^A-Z0-9 _\-]/g,'').slice(0,12);if(!n)n='PILOT-'+roomCode().slice(0,3);try{localStorage.setItem('npx_name',n);}catch(e){}$('oName').value=n;return n;}
 function validCfg(c){return c&&FRAMES[c.frame]&&WEAPONS[c.weapon]&&Array.isArray(c.skills)&&c.skills.length>=1&&c.skills.length<=2&&c.skills.every(k=>SKILLS[k])&&new Set(c.skills).size===c.skills.length&&(!c.ult||(ULTS[c.ult]&&ULTS[c.ult].frame===c.frame));}
 function netSend(o){if(NET.link)NET.link.send(o);}
@@ -3895,7 +3959,8 @@ function randomCfg(){
 }
 function cpuLevel(){const v=store('cpu');return CPU_LEVELS.includes(v)?v:'NORMAL';}
 function syncCpuLevel(){document.querySelectorAll('#cpuLvl button').forEach(b=>b.classList.toggle('on',b.dataset.l===cpuLevel()));}
-function newRival(){RIVAL=randomCfg();RIVAL.name=RIVALS[Math.floor(Math.random()*RIVALS.length)];$('rivalName').textContent=RIVAL.name;}
+function newRival(){RIVAL=randomCfg();RIVAL.name=RIVALS[Math.floor(Math.random()*RIVALS.length)];
+  {const ks=Object.keys(TONES).filter(k=>TONES[k].rar<=2);RIVAL.tone=Math.random()<.5?ks[Math.floor(Math.random()*ks.length)]:null;}$('rivalName').textContent=RIVAL.name;}
 function startBattle(rematch){
   if(!rematch||!RIVAL)newRival();
   const seed=(Math.random()*4294967296)>>>0;
@@ -3926,7 +3991,26 @@ function showResult(kind){
   const rm=$('bRematch').querySelector('.bt'),lo=$('bLoadout').querySelector('.bt'),lob=$('bLoadout').querySelector('.bs');
   if(UI.replay){rm.textContent='WATCH AGAIN';$('bRematch').querySelector('.bs').textContent='もう一度見る';$('bRematch').disabled=false;lo.textContent='EXIT';lob.textContent='リプレイを閉じる';$('bWatch').hidden=true;}
   else{rm.textContent='REMATCH';lo.textContent='LOADOUT';lob.textContent='構成を変える';$('bWatch').hidden=false;}
+  showDrop();
   $('result').classList.add('show');
+}
+function renderTones(){
+  const el=$('toneSw');if(!el)return;const own=new Set(ownedTones());if(CFG.tone&&!own.has(CFG.tone))CFG.tone=null;
+  const all=Object.keys(TONES);let h='<button class="sw'+(!CFG.tone?' on':'')+'" data-k="" title="ORIGINAL" style="background:linear-gradient(135deg,#dfe8ff 50%,#4d8bff 50%)"></button>';
+  for(const k of all){const T=TONES[k];h+=own.has(k)?'<button class="sw r'+T.rar+(CFG.tone===k?' on':'')+'" data-k="'+k+'" title="'+k+' · '+T.kana+'" style="background:'+T.sw+'"></button>':'<button class="sw lock" title="未入手" disabled></button>';}
+  el.innerHTML=h;$('toneCnt').textContent=own.size+'/'+all.length;
+  el.querySelectorAll('.sw:not(.lock)').forEach(b=>b.onclick=()=>{CFG.tone=b.dataset.k||null;store('tone',CFG.tone);refreshSetup();});
+}
+/* result screen: the colour this battle dropped, shown on your current frame */
+function showDrop(){
+  const el=$('rDrop');if(!el)return;el.hidden=true;if(UI.replay)return;
+  const k=dropTone();
+  if(!k){if(ownedTones().length>=Object.keys(TONES).length){el.hidden=false;el.style.setProperty('--rc','#ffd23a');el.innerHTML='<div><div class="rk">COLOR</div><div class="rn">COMPLETE</div><div class="rj">全カラーを入手済み</div></div>';}return;}
+  const T=TONES[k],R=RARITY[T.rar];el.hidden=false;el.style.setProperty('--rc',R.c);
+  el.innerHTML='<canvas width="176" height="176"></canvas><div><div class="rk">NEW COLOR · '+R.n+'</div><div class="rn">'+k+'</div><div class="rj">'+T.kana+' — どのフレームにも使える</div><button id="bTone">装備する</button></div>';
+  const cv=el.querySelector('canvas'),g=cv.getContext('2d'),fr=S&&S.units[0]?S.units[0].frame:CFG.frame;
+  try{drawMechFit(g,fr,CFG.weapon,PAL[0][fr],8,8,160,160,1,now(),{tone:k,noGlow:true});}catch(e){}
+  $('bTone').onclick=()=>{CFG.tone=k;store('tone',k);$('bTone').textContent='装備した';$('bTone').disabled=true;};
 }
 function toSetup(){UI.deadline=0;UI.hack=null;if(NET.on)netLeave(true);if(UI.replay)endReplayUI();$('result').classList.remove('show');$('game').style.display='none';$('setup').style.display='block';UI.screen='setup';S=null;newRival();refreshSetup();}
 
@@ -4132,6 +4216,7 @@ function refreshSetup(){
   {const uEl=$('cUlts');if(uEl){uEl.innerHTML='';for(const k of ULT_OF(CFG.frame)){const d=ULTS[k];const b=document.createElement('button');b.className='card'+(k===CFG.ult?' sel':'');b.dataset.k=k;
     b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn" style="color:#ffd23a">★ '+rb(d.name)+'</span><span class="cm" style="color:'+(d.role==='DEFENSE'?'var(--g)':'var(--n-dmg)')+'">'+rb(d.role)+'</span><span class="cp">'+fmtNums(d.desc,'ult')+'</span></span>';
     b.onclick=()=>{CFG.ult=k;refreshSetup();};uEl.appendChild(b);drawMini(b.querySelector('canvas.mg'),'ult',k,ULT_COLOR);}}}
+  renderTones();
   const f=FRAMES[CFG.frame],w=WEAPONS[CFG.weapon];
   $('pvName').innerHTML=(ED.pro&&CFG.mech)?esc(CFG.mech):rb(f.name);$('pvRole').textContent=(ED.pro&&CFG.mech?f.name+' · ':'')+f.role;
   $('pvHp').style.width=(f.hp/200*100)+'%';$('pvHpN').textContent=f.hp;
@@ -4197,7 +4282,7 @@ function wire(){
   setInterval(cpuTick,250);
   $('bUndo').onclick=undoAction;$('bReset').onclick=resetPlan;$('bExec').onclick=()=>executeTurn();
   $('bStart').onclick=()=>startBattle(false);
-  $('bRandom').onclick=()=>{const r=randomCfg();CFG=r;refreshSetup();};
+  $('bRandom').onclick=()=>{const r=randomCfg();r.tone=CFG.tone;CFG=r;refreshSetup();};
   $('bHow').onclick=$('bHelp2').onclick=()=>$('help').classList.add('show');
   $('bHelpClose').onclick=()=>$('help').classList.remove('show');
   $('help').addEventListener('pointerdown',e=>{if(e.target.id==='help')$('help').classList.remove('show');});
@@ -4222,6 +4307,7 @@ function frame(){
   try{if(UI.screen==='game')renderGame(t,dt);else renderSetupPreview(t);}catch(e){console.error(e);}
   requestAnimationFrame(frame);
 }
+CFG.tone=validTone(store('tone'));if(CFG.tone&&!ownedTones().includes(CFG.tone))CFG.tone=null;
 if(/[?&]test=1/.test(location.search))$('bEdition').hidden=false;
 wire();buildSetup();newRival();refreshSetup();
 {const h=document.querySelector('#help');if(h)h.querySelectorAll('li').forEach(li=>fmtNode(li,'fr'));}
