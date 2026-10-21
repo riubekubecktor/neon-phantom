@@ -363,6 +363,7 @@ rt{font:400 9px/1.1 var(--fj);letter-spacing:.04em;color:#8ea6cc;text-transform:
 .legline .b{background:rgba(255,138,42,.4);outline:1px dashed #ff8a2a;outline-offset:-1px}.legline .e{background:#ff2a8a}.legline .w{background:#3b62b8}
 /* skill category tags */
 .ctag{display:inline-block;margin:0 0 0 6px;font:400 13px/1 var(--fv);padding:1px 5px 0;color:#02030a;vertical-align:1px}
+.ctag.wm{background:#ff8a5c}.ctag.wr{background:#ffe14d}.ctag.wx{background:#c77dff}
 .ctag.mv{background:var(--c)}.ctag.df{background:var(--g)}.ctag.jm{background:var(--m)}.ctag.bf{background:var(--o)}.ctag.st{background:var(--y)}.ctag.self{background:#9fb3d6}
 /* frame card stat bars */
 .fst{display:grid;grid-template-columns:30px 1fr 22px;align-items:center;gap:5px;margin-top:3px;font:400 14px/1 var(--fv);color:var(--dim)}
@@ -728,7 +729,8 @@ header.title{position:relative}
       <li>攻撃の向きは<b>8方向</b>。攻撃先は予約時の位置からの<b>相対位置</b>として記録され、実行時の現在地に適用される。</li>
       <li>壁のマスは選べない。<b>RIFLE / RESONANCE</b>（と X-RAY中の攻撃）は壁越しに狙え、直線上のすべてに当たる。</li>
       <li>投擲・曲射は<b>ひし形</b>の射程。<b>CLUSTER</b>＝即着弾の十字／<b>SPIKE</b>＝次ターン開始に3×3／<b>HOWITZER</b>＝次の手の後に3マス列（3マス以上先）／<b>MORTAR</b>＝ターン終了時に3×3（2マス以上先）。</li>
-      <li><b>REFLECT</b> は最初の攻撃を半分にして、残り半分を跳ね返す。「射撃」タグの武器は <b>SMOKE</b> の煙で防がれる。</li>
+      <li><b>REFLECT</b> は最初の攻撃を半分にして、残り半分を跳ね返す。<b>SMOKE</b> の煙の中へ、または煙の中からの攻撃は80%で外れる。</li>
+      <li>武器は<b>近接・射撃・特殊</b>の3分類（各5種）。</li>
       <li><b>MINE</b> は相手から見えない。踏んだ瞬間に爆発する。</li>
       <li>スマホは<b>1回目のタップで照準プレビュー、2回目で確定</b>。</li>
     </ul>
@@ -790,21 +792,21 @@ const FRAMES={
 };
 /* tgt: adj=8 adjacent · line/lineS=8-dir line stopped by walls (X-RAY → ray) · ray=8-dir line through walls · throw=diamond · lob=diamond, min 2 · lob3=diamond, min 3 · dash=line */
 const WEAPONS={
-  NEON_BLADE: {name:'BLADE', ap:3,dmg:30,range:1, kind:'sweep',arc:1,tgt:'adj',  color:'#00f0ff',rtag:'近接・前方3マス', desc:'前方横3マスをまとめて薙ぎ払う。扱いやすい近接の基本形'},
-  TWIN_TRIG:  {name:'TRIG',  ap:2,dmg:20,range:3, kind:'shot',       tgt:'line', color:'#ffe14d',rtag:'直線3・射撃',   desc:'低コストの牽制射撃。最初に当たった相手に命中',ranged:true},
-  BOLT_RIFLE: {name:'RIFLE', ap:5,dmg:34,range:99,kind:'beam',       tgt:'ray',  color:'#ff9a2a',rtag:'直線∞・壁貫通・射撃',  desc:'壁も機体も貫く狙撃ビーム。直線上すべてに命中',ranged:true},
-  VOID_SPIKE: {name:'SPIKE', ap:3,dmg:40,range:4, kind:'spike',      tgt:'throw',color:'#b04dff',rtag:'投擲4・ひし形',  desc:'設置→次ターン開始時に3×3へ40→以後2ターン、踏むと14'},
-  CLUSTER_B:  {name:'CLUSTER', ap:3,dmg:26,range:3, kind:'cluster',    tgt:'throw',color:'#ff5a1f',rtag:'投擲3・十字・即着弾',  desc:'その手のうちに着弾する唯一の投擲。中心26＋上下左右4マスに20'},
-  PILE_BNKR:  {name:'BNKR',  ap:4,dmg:32,range:1, kind:'pile',       tgt:'adj',  color:'#e6f0ff',rtag:'近接1・8方向',   desc:'2マス吹き飛ばす。壁に激突で+15＆スタン'},
-  VORTEX_DASH:{name:'DASH',ap:5,dmg:22,range:3, kind:'dash',       tgt:'dash', color:'#2dffd0',rtag:'突進3・8方向',   desc:'突進攻撃。衝突優先権で相手を弾き飛ばして移動完了'},
-  BLOOD_SCY:  {name:'SCY',  ap:4,dmg:26,range:1, kind:'sweep',arc:2,tgt:'adj',  color:'#ff2a5a',rtag:'近接・前方半円5', desc:'前方半円5マス。与えたダメージの40%を回復'},
-  RESONANCE:  {name:'RESONANCE',  ap:3,dmg:15,range:99,kind:'reso',       tgt:'ray',  color:'#c77dff',rtag:'直線∞・壁透過・射撃',  desc:'壁を透過する共振波。壁に隣接する相手には倍の30',ranged:true},
-  IMP_KNUCKLE:{name:'KNUCKLE',ap:3,dmg:22,range:2, kind:'knuckle',    tgt:'line', color:'#7ab8ff',rtag:'直線2・8方向',   desc:'射程2の突き。命中した相手を1マス後退させる'},
-  SCATTER:    {name:'SCATTER',ap:3,dmg:32,range:2, kind:'scatter',    tgt:'adj',  color:'#b6ff3a',rtag:'近距離・扇状・射撃', desc:'前方1マスに32、その先の扇状3マスに20',ranged:true},
-  INFERNO:    {name:'INFERNO',    ap:3,dmg:24,range:2, kind:'flame',      tgt:'lineS',color:'#ff5a1f',rtag:'直線2・延焼・射撃',   desc:'直線2マスを焼いて24。炎は次ターン終了まで残り、踏む/留まると8',ranged:true},
-  SHOCK_ROD:  {name:'ROD',  ap:3,dmg:22,range:1, kind:'shock',      tgt:'adj',  color:'#fff35c',rtag:'近接1・スタン', desc:'隣接1マスに22＋スタン（相手の残り行動をすべてキャンセル）'},
-  ARC_MORTAR: {name:'MORTAR', ap:3,dmg:34,range:5, kind:'mortar',     tgt:'lob',  color:'#ff6ad5',rtag:'曲射2〜5・ターン終了', desc:'壁越しに砲撃を予約。全行動の後に着弾：中心34／周囲8マス12。最後に立つ場所を読む'},
-  HOWITZER:   {name:'HOWITZER', ap:3,dmg:28,range:6, kind:'howitzer',   tgt:'lob3', color:'#ffb347',rtag:'曲射3〜6・1手後・列', desc:'遠くへ撃つ榴弾砲。次の手の後に着弾し、射線と直交する3マス一列に28。横へ逃げる相手を狩る'},
+  NEON_BLADE: {name:'BLADE', ap:3,dmg:30,range:1, kind:'sweep',arc:1,tgt:'adj',  color:'#00f0ff',cat:'近接',rtag:'前方3マス', desc:'前方横3マスをまとめて薙ぎ払う。扱いやすい近接の基本形'},
+  TWIN_TRIG:  {name:'TRIG',  ap:2,dmg:20,range:3, kind:'shot',       tgt:'line', color:'#ffe14d',cat:'射撃',rtag:'直線3',   desc:'低コストの牽制射撃。最初に当たった相手に命中',ranged:true},
+  BOLT_RIFLE: {name:'RIFLE', ap:5,dmg:34,range:99,kind:'beam',       tgt:'ray',  color:'#ff9a2a',cat:'射撃',rtag:'直線∞・壁貫通',  desc:'壁も機体も貫く狙撃ビーム。直線上すべてに命中',ranged:true},
+  VOID_SPIKE: {name:'SPIKE', ap:3,dmg:40,range:4, kind:'spike',      tgt:'throw',color:'#b04dff',cat:'特殊',rtag:'投擲4・次ターン起爆',  desc:'設置→次ターン開始時に3×3へ40→以後2ターン、踏むと14'},
+  CLUSTER_B:  {name:'CLUSTER', ap:3,dmg:26,range:3, kind:'cluster',    tgt:'throw',color:'#ff5a1f',cat:'特殊',rtag:'投擲3・十字・即着弾',  desc:'その手のうちに着弾する唯一の投擲。中心26＋上下左右4マスに20'},
+  PILE_BNKR:  {name:'BNKR',  ap:4,dmg:32,range:1, kind:'pile',       tgt:'adj',  color:'#e6f0ff',cat:'近接',rtag:'隣接1・吹き飛ばし',   desc:'2マス吹き飛ばす。壁に激突で+15＆スタン'},
+  VORTEX_DASH:{name:'DASH',ap:5,dmg:22,range:3, kind:'dash',       tgt:'dash', color:'#2dffd0',cat:'特殊',rtag:'突進3・8方向',   desc:'突進攻撃。衝突優先権で相手を弾き飛ばして移動完了'},
+  BLOOD_SCY:  {name:'SCY',  ap:4,dmg:26,range:1, kind:'sweep',arc:2,tgt:'adj',  color:'#ff2a5a',cat:'近接',rtag:'前方半円5・吸収', desc:'前方半円5マス。与えたダメージの40%を回復'},
+  RESONANCE:  {name:'RESONANCE',  ap:3,dmg:15,range:99,kind:'reso',       tgt:'ray',  color:'#c77dff',cat:'射撃',rtag:'直線∞・壁透過',  desc:'壁を透過する共振波。壁に隣接する相手には倍の30',ranged:true},
+  IMP_KNUCKLE:{name:'KNUCKLE',ap:3,dmg:22,range:2, kind:'knuckle',    tgt:'line', color:'#7ab8ff',cat:'近接',rtag:'直線2・押し出し',   desc:'射程2の突き。命中した相手を1マス後退させる'},
+  SCATTER:    {name:'SCATTER',ap:3,dmg:32,range:2, kind:'scatter',    tgt:'adj',  color:'#b6ff3a',cat:'射撃',rtag:'扇状・近距離', desc:'前方1マスに32、その先の扇状3マスに20',ranged:true},
+  INFERNO:    {name:'INFERNO',    ap:3,dmg:24,range:2, kind:'flame',      tgt:'lineS',color:'#ff5a1f',cat:'射撃',rtag:'直線2・延焼',   desc:'直線2マスを焼いて24。炎は次ターン終了まで残り、踏む/留まると8',ranged:true},
+  SHOCK_ROD:  {name:'ROD',  ap:3,dmg:22,range:1, kind:'shock',      tgt:'adj',  color:'#fff35c',cat:'近接',rtag:'隣接1・スタン', desc:'隣接1マスに22＋スタン（相手の残り行動をすべてキャンセル）'},
+  ARC_MORTAR: {name:'MORTAR', ap:3,dmg:34,range:5, kind:'mortar',     tgt:'lob',  color:'#ff6ad5',cat:'特殊',rtag:'曲射2〜5・ターン終了', desc:'壁越しに砲撃を予約。全行動の後に着弾：中心34／周囲8マス12。最後に立つ場所を読む'},
+  HOWITZER:   {name:'HOWITZER', ap:3,dmg:28,range:6, kind:'howitzer',   tgt:'lob3', color:'#ffb347',cat:'特殊',rtag:'曲射3〜6・1手後・列', desc:'遠くへ撃つ榴弾砲。次の手の後に着弾し、射線と直交する3マス一列に28。横へ逃げる相手を狩る'},
 };
 const SKILLS={
   BLINK:   {name:'BLINK',   cd:2,ap:1,tgt:'square',range:2,desc:'2マス以内（8方向）へ壁抜けテレポート'},
@@ -825,7 +827,7 @@ const SKILLS={
   BACKSTEP:{name:'BACKSTEP',cd:4,ap:1,tgt:'none',desc:'このターン、攻撃が当たる瞬間に1マス下がって1回だけ自動で回避（下がれない時は被弾）'},
   PARRY:   {name:'PARRY',   cd:5,ap:1,tgt:'none',desc:'発動した手と次の手の間、最初に受ける1マス以内からの攻撃を無効化して相手をスタン'},
   FORTIFY: {name:'FORTIFY', cd:6,ap:1,tgt:'none',desc:'受けるダメージ半分・与えるダメージ1.2倍。その間は移動できず、解除にはBIT1の1手が必要'},
-  SMOKE:   {name:'SMOKE',   cd:5,ap:1,tgt:'square',range:3,desc:'3マス以内に3×3の煙。次ターン終了まで、煙の中の機体には射撃が届かない'},
+  SMOKE:   {name:'SMOKE',   cd:5,ap:1,tgt:'square',range:3,desc:'3マス以内に3×3の煙。次ターン終了まで、煙の中の機体への攻撃と、煙の中からの攻撃は80%で外れる'},
 };
 /* ULTIMATES — 2 per frame, pick 1 (hidden from the rival until used). One use per match. */
 const ULTS={
@@ -909,13 +911,15 @@ function newMatch(seed,cfg0,cfg1,opt){
   const rng=mulberry32(seed);
   let {map,spawns}=genMap(rng);
   if(opt.mirror)map=map.map((r,y)=>r.map((_,x)=>map[N-1-y][N-1-x]));
-  S={seed,map,wallHp:{},turn:1,step:0,phase:'plan',over:false,hostSide:opt.mirror?1:0,
+  S={seed,rs:(seed^0x9E3779B9)>>>0,map,wallHp:{},turn:1,step:0,phase:'plan',over:false,hostSide:opt.mirror?1:0,
      units:[makeUnit(0,cfg0,spawns[0]),makeUnit(1,cfg1,spawns[1])],
      spikes:[],shells:[],mortars:[],burns:[],mines:[],orbitals:[],smokes:[],decoys:[null,null],stats:[{dealt:0,taken:0},{dealt:0,taken:0}]};
   startTurn();
   return S;
 }
 
+function srand(){let t=(S.rs=(S.rs+0x6D2B79F5)|0);t=Math.imul(t^t>>>15,1|t);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+const SMOKE_MISS=.8;
 function isFloor(x,y){return inB(x,y)&&S.map[y][x]===0;}
 function unitAt(x,y,exceptSide){
   if(!S)return null;
@@ -962,8 +966,11 @@ function dealDamage(t,amt,src){
   if(t.iron&&sSide!=null&&sSide!==t.side&&!(src&&src.refl)){
     ev('ironWall',{side:t.side,amount:amt});ev('delay',{ms:150});
     dealDamage(S.units[sSide],amt,{side:t.side,refl:true});return 0;}
+  if(src&&(src.atk||src.wpn)&&sSide!=null&&sSide!==t.side){
+    const shooter=CUR&&CUR.side===sSide?CUR:S.units[sSide];
+    if((inSmoke(t)||(src.atk&&shooter&&inSmoke(shooter)))&&srand()<SMOKE_MISS){ev('smokeBlock',{side:t.side,...tk(t)});return 0;}
+  }
   if(src&&src.atk&&sSide!=null&&sSide!==t.side){
-    if(src.ranged&&inSmoke(t)){ev('smokeBlock',{side:t.side,...tk(t)});return 0;}
     if(t.parryUntil>=S.step&&cheb(t,S.units[sSide])<=1){t.parryUntil=-1;ev('parry',{side:t.side,to:sSide,...tk(t)});ev('delay',{ms:140});stunUnit(S.units[sSide]);return 0;}
     if(t.backstep){
       const a=S.units[sSide];let dx=Math.sign(t.x-a.x),dy=Math.sign(t.y-a.y);if(!dx&&!dy)dx=1;
@@ -1284,7 +1291,7 @@ function endOfSteps(){
   for(const m of S.mortars){
     any=true;const cells=box9(m.x,m.y);
     ev('fx',{type:'mortar',x:m.x,y:m.y,cells,color:WEAPONS.ARC_MORTAR.color});ev('delay',{ms:360});
-    for(const c of cells){const t=hitAt(c.x,c.y,-1);const center=c.x===m.x&&c.y===m.y;if(t)dealDamage(t,center?m.dmg:m.ring,{side:m.owner});wallDamage(c.x,c.y,center?m.dmg:m.ring);}
+    for(const c of cells){const t=hitAt(c.x,c.y,-1);const center=c.x===m.x&&c.y===m.y;if(t)dealDamage(t,center?m.dmg:m.ring,{side:m.owner,wpn:true});wallDamage(c.x,c.y,center?m.dmg:m.ring);}
   }
   S.mortars=[];
   for(const u of actors()){const b=S.burns.find(b=>b.owner!==u.side&&b.x===u.x&&b.y===u.y);if(b){any=true;ev('burnHit',{x:u.x,y:u.y,side:u.side,...tk(u)});dealDamage(u,8,{side:b.owner});}}
@@ -1296,7 +1303,7 @@ const CLUSTER_RING=20,VOID_BURST=40,VOID_TICK=14;
 /* a HOWITZER shell lands one step after it was fired */
 function shellExplode(c){
   ev('fx',{type:'mortar',x:c.x,y:c.y,cells:c.cells,color:WEAPONS.HOWITZER.color,label:'HOWITZER'});ev('delay',{ms:360});
-  for(const cc of c.cells){const t=hitAt(cc.x,cc.y,-1);if(t)dealDamage(t,c.dmg,{side:c.owner});wallDamage(cc.x,cc.y,c.dmg);}
+  for(const cc of c.cells){const t=hitAt(cc.x,cc.y,-1);if(t)dealDamage(t,c.dmg,{side:c.owner,wpn:true});wallDamage(cc.x,cc.y,c.dmg);}
 }
 
 function doSkill(u,a){
@@ -1454,7 +1461,7 @@ function startTurn(){
       det=true;sp.state='zone';sp.expire=S.turn+1;       // active this turn and next
       const cells=box9(sp.x,sp.y);
       ev('fx',{type:'void',x:sp.x,y:sp.y,cells,color:WEAPONS.VOID_SPIKE.color});
-      const vd=Math.round(VOID_BURST*(sp.mult||1));for(const c of cells){const t=hitAt(c.x,c.y,-1);if(t)dealDamage(t,vd,{side:sp.owner});wallDamage(c.x,c.y,vd);}
+      const vd=Math.round(VOID_BURST*(sp.mult||1));for(const c of cells){const t=hitAt(c.x,c.y,-1);if(t)dealDamage(t,vd,{side:sp.owner,wpn:true});wallDamage(c.x,c.y,vd);}
     }
   }
   for(const d of S.decoys)if(d){d.sx=d.x;d.sy=d.y;}
@@ -1789,7 +1796,7 @@ function aiPlanCore(side,opt){
   else if(has('FORTIFY')&&W.kind!=='dash'&&aiFindAttack(me,op,pos,ap-1,false,0)&&R()<.55){if(use('FORTIFY')){mvl=0;fortNow=true;}}
   if(has('PARRY')&&d0<=2&&R()<.65)use('PARRY');
   if(has('BACKSTEP')&&d0<=4&&R()<.55)use('BACKSTEP');
-  if(has('SMOKE')&&OW.ranged&&d0>=2&&R()<.6){const k=dirIndex(op.x-pos.x,op.y-pos.y),[sx,sy]=DIR8[k];if(inB(pos.x+sx,pos.y+sy))use('SMOKE',sx,sy);}
+  if(has('SMOKE')&&d0<=5&&R()<.45){const k=dirIndex(op.x-pos.x,op.y-pos.y),[sx,sy]=DIR8[k];if(inB(pos.x+sx,pos.y+sy))use('SMOKE',sx,sy);}
   if(has('OVERCLOCK')&&ap-1>=W.ap&&aiFindAttack(me,op,pos,ap-1,false,mvl)&&R()<.8)use('OVERCLOCK');
   let attacks=0;
   const realOp=S.units[1-side];
@@ -2048,9 +2055,9 @@ function handleEvent0(type,d){
     case 'counterHit':{const t=S.units[d.to];addFx({kind:'burst',x:t.x,y:t.y,color:'#ff6a1a',dur:620});addFx({kind:'ring',x:t.x,y:t.y,color:'#ff6a1a',dur:520,r0:.1,r1:.9});V.shake=Math.max(V.shake,14);
       log(tagName(d.side)+' <span class="w">COUNTER — 受けた痛みを'+d.amount+'にして返す！</span>','p'+d.side);break;}
     case 'orbitalMark':banner('STRIKE LOCK','NEXT TURN · 5×5 · '+ORBITAL_DMG,'#ff3355',900,awayY(d.y));log('STRIKE 照準 ('+(d.x+1)+','+(d.y+1)+') — <span class="w">次のターンの全行動の後に着弾</span>','p'+d.side);break;
-    case 'smokeSet':addFx({kind:'cells',cells:box9(d.x,d.y),color:'#c8d2e6',dur:600});smoke(cxOf(d.x),cxOf(d.y),14,'#8a96b0',{life:60,a:.6});log(tagName(d.side)+' <span class="w">SMOKE</span> — 煙の中には射撃が届かない（次ターン終了まで）','p'+d.side);break;
+    case 'smokeSet':addFx({kind:'cells',cells:box9(d.x,d.y),color:'#c8d2e6',dur:600});smoke(cxOf(d.x),cxOf(d.y),14,'#8a96b0',{life:60,a:.6});log(tagName(d.side)+' <span class="w">SMOKE</span> — 煙の中へ・煙の中からの攻撃は80%で外れる（次ターン終了まで）','p'+d.side);break;
     case 'smokeEnd':log('SMOKE が晴れた','sys');break;
-    case 'smokeBlock':floatNum(d.side,'SMOKE!','#c8d2e6',C*.32);log(tagName(d.side)+' 煙に隠れて射撃を防いだ','p'+d.side);break;
+    case 'smokeBlock':floatNum(d.side,'MISS','#c8d2e6',C*.34);log('煙で狙いがそれた — '+tagName(d.side)+' に当たらず','p'+d.side);break;
     case 'parry':{const p=unitPx(d.side);sparks(p.x,p.y,'#ffffff',22,6,{type:'spark',life:16});V.hitstop=now()+110/SPEED;V.shake=Math.max(V.shake,10);floatNum(d.side,'PARRY!!','#ffffff',C*.4,{big:true});
       log(tagName(d.side)+' <span class="h">PARRY — 至近距離の攻撃を弾いた！</span> '+tagName(d.to)+' はスタン','p'+d.side);break;}
     case 'backstep':if(vu){vu.tx=d.to.x;vu.ty=d.to.y;vu.spd=24;}footLabel(d.side,'DODGE','#7af0ff');log(tagName(d.side)+' <span class="h">BACKSTEP — 1マス下がって回避！</span>','p'+d.side);break;
@@ -3387,7 +3394,7 @@ function setHint(){
   if(!UI.mode){el.innerHTML=UI.hack?'<b style="color:var(--g)">SYSTEM HACK</b> — 相手の予約が丸見え。組み直して <b>EXECUTE ▶▶</b>':decoyMode()?(UI.actor==='d'?'<b style="color:#c77dff">分身を操作中</b> — 予約した行動は分身が行う（BIT各自-2）。<b>★</b>で本体に戻る':'<b style="color:#c77dff">MIRAGE</b> — <b>★</b>で本体／分身を切り替えて、それぞれ行動を予約 → <b>EXECUTE ▶▶</b>'):'行動を予約 → <b>EXECUTE ▶▶</b>（相手も同時に動く）';return;}
   if(UI.mode==='move'){el.innerHTML=(UI.actor==='d'&&decoyMode()?'<b style="color:#c77dff">分身</b> ':'')+'<b>MOVE</b> — 移動先を選択（このターンあと<span class="n cell">'+budget(u,simAct()).mv+'マス</span>）';return;}
   if(UI.mode==='ult'){const d=ULTS[u.ult];el.innerHTML='<b style="color:#ffd23a">★ '+d.name+'</b> '+(d.tgt==='dir4'?'（縦横の方向を選択）':d.tgt==='any'?'（5×5の中心を選択）':'（移動先を選択）')+' — '+tap;return;}
-  if(UI.mode==='atk'){const W=WEAPONS[u.weapon];el.innerHTML='<b>'+W.name+'</b> '+W.rtag+' · 予想 <span class="n dmg">'+expectedDmg()+' DMG</span> — '+tap;return;}
+  if(UI.mode==='atk'){const W=WEAPONS[u.weapon];el.innerHTML='<b>'+W.name+'</b> '+W.cat+'・'+W.rtag+' · 予想 <span class="n dmg">'+expectedDmg()+' DMG</span> — '+tap;return;}
   const sk=u.skills[+UI.mode.slice(2)];const d=SKILLS[sk.key];
   const extra=sk.key==='SWAP'?'（範囲内ならどこでも可）':sk.key==='HOOK'?'（方向を選択）':'';
   el.innerHTML='<b>'+d.name+'</b> '+extra+' — '+tap;
@@ -4099,7 +4106,7 @@ function buildSetup(){
   const wEl=$('cWeapons');wEl.innerHTML='';
   for(const [k,w] of Object.entries(WEAPONS)){
     const b=document.createElement('button');b.className='card';b.dataset.k=k;
-    b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn">'+rb(w.name)+'</span><span class="cm">'+fmtStat([['BIT',w.ap,'bit'],['DMG',w.dmg,'dmg'],['RNG',(w.range>=99?'∞':w.range),'cell']])+'</span><span class="cp">'+fmtNums(w.desc,'atk')+'</span><span class="rt">'+w.rtag+'</span></span>';
+    b.innerHTML='<span class="in"><canvas class="mg" width="140" height="140"></canvas><span class="cn">'+rb(w.name)+'<span class="ctag '+({近接:'wm',射撃:'wr',特殊:'wx'}[w.cat]||'self')+'">'+w.cat+'</span></span><span class="cm">'+fmtStat([['BIT',w.ap,'bit'],['DMG',w.dmg,'dmg'],['RNG',(w.range>=99?'∞':w.range),'cell']])+'</span><span class="cp">'+fmtNums(w.desc,'atk')+'</span><span class="rt">'+w.rtag+'</span></span>';
     b.onclick=()=>{CFG.weapon=k;refreshSetup();};wEl.appendChild(b);drawMini(b.querySelector('canvas.mg'),'atk',k,w.color);
   }
   const sEl=$('cSkills');sEl.innerHTML='';
@@ -4131,7 +4138,7 @@ function refreshSetup(){
   $('pvAp').style.width=(f.mv/8*100)+'%';$('pvApN').textContent=f.mv>=8?'∞':f.mv;
   $('pvDmg').style.width=(Math.max(8,w.dmg)/50*100)+'%';$('pvDmgN').textContent=w.dmg;
   $('pvPas').innerHTML='<b>['+rb(f.passive)+']</b><br>'+fmtNums(f.pdesc,'fr');
-  $('pvW').innerHTML=rb(w.name)+' — '+esc(w.rtag);drawMini($('pvMg'),'atk',CFG.weapon,w.color);
+  $('pvW').innerHTML=rb(w.name)+' — '+esc(w.cat+'・'+w.rtag);drawMini($('pvMg'),'atk',CFG.weapon,w.color);
   $('pvS0').innerHTML=CFG.skills[0]?rb(SKILLS[CFG.skills[0]].name):'—';$('pvS1').innerHTML=CFG.skills[1]?rb(SKILLS[CFG.skills[1]].name):'—';$('pvU').innerHTML='★ '+rb(ULTS[CFG.ult].name);
   $('bStart').disabled=CFG.skills.length<1;
   drawFrameThumbs();
