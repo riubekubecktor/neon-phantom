@@ -493,7 +493,9 @@ header.title{position:relative}
 .rs{margin-top:10px;font-size:14px;color:var(--dim)}
 .tone{display:flex;align-items:center;gap:8px;margin:8px 0 2px}
 .tone>span{font:700 9px var(--fo);letter-spacing:.2em;color:var(--dim);width:44px;flex:none}
-.tone em{font:400 13px var(--fv);color:var(--dim);font-style:normal;margin-left:auto;flex:none}
+.tone em{font:400 13px var(--fv);color:var(--dim);font-style:normal;margin-left:auto}
+.tone b{font:700 11px var(--fo);letter-spacing:.1em;color:#fff}
+.tone .sw{cursor:default;flex:none}
 .sws{display:flex;flex-wrap:wrap;gap:4px}
 .sw{width:18px;height:18px;border:1px solid rgba(255,255,255,.18);cursor:pointer;padding:0;position:relative}
 .sw.on{outline:2px solid #fff;outline-offset:1px}
@@ -540,7 +542,7 @@ header.title{position:relative}
         <div class="stat"><span>HP</span><div class="bar hpb"><i id="pvHp"></i></div><b id="pvHpN">100</b></div>
         <div class="stat"><span>MOVE</span><div class="bar apb"><i id="pvAp"></i></div><b id="pvApN">5</b></div>
         <div class="stat"><span>DMG</span><div class="bar"><i id="pvDmg"></i></div><b id="pvDmgN">30</b></div>
-        <div class="tone"><span>COLOR</span><div class="sws" id="toneSw"></div><em id="toneCnt"></em></div>
+        <div class="tone"><span>COLOR</span><i class="sw" id="toneSw"></i><b id="toneName">ORIGINAL</b><em>試合後に変更できる</em></div>
         <div class="pvmg"><canvas id="pvMg" width="252" height="252"></canvas><div class="mgleg"><span><i class="s"></i>自分</span><span><i class="o"></i>狙えるマス</span><span><i class="m"></i>当たる範囲（例：右を狙った時）</span><span><i class="b"></i>爆風・追加ダメージ</span><span><i class="w"></i>壁</span></div></div>
         <div class="pvpas" id="pvPas"></div>
         <div class="loadout">
@@ -1898,14 +1900,16 @@ const TONES={
   NEGATIVE:{kana:'ネガティブ',rar:3,neg:true,sw:'#e6ff3a'}, HOLO:{kana:'ホログラム',rar:3,holo:true,sw:'linear-gradient(135deg,#ff5ab4,#ffe14d,#3dff9a,#3db4ff,#b45aff)'},
 };
 const RARITY=[null,{n:'COMMON',w:10,c:'#9fb3d6'},{n:'RARE',w:4,c:'#3db4ff'},{n:'EPIC',w:1,c:'#ffd23a'}];
-function ownedTones(){const o=store('tones');return Array.isArray(o)?o.filter(k=>TONES[k]):[];}
+/* each frame keeps exactly one colour; a re-roll after a battle replaces it (the old one is gone) */
+function frameTones(){const o=store('ftone');return o&&typeof o==='object'?o:{};}
+function toneOfFrame(f){return validTone(frameTones()[f]);}
+function setFrameTone(f,k){const o=frameTones();if(k)o[f]=k;else delete o[f];store('ftone',o);}
 function validTone(k){return k&&TONES[k]?k:null;}
-/* one random colour per battle, never one you already have */
-function dropTone(){
-  const own=new Set(ownedTones()),pool=Object.keys(TONES).filter(k=>!own.has(k));if(!pool.length)return null;
-  let tot=0;for(const k of pool)tot+=RARITY[TONES[k].rar].w;let r=Math.random()*tot,pick=pool[0];
-  for(const k of pool){r-=RARITY[TONES[k].rar].w;if(r<=0){pick=k;break;}}
-  own.add(pick);store('tones',[...own]);return pick;
+/* weighted pick, never the colour you already have; ORIGINAL is in the pool as a common */
+function rollTone(cur){
+  const pool=['',...Object.keys(TONES)].filter(k=>k!==(cur||''));
+  const w=k=>k?RARITY[TONES[k].rar].w:RARITY[1].w;let tot=0;for(const k of pool)tot+=w(k);
+  let r=Math.random()*tot;for(const k of pool){r-=w(k);if(r<=0)return k||null;}return pool[0]||null;
 }
 function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
   if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;}return [h,s,l];}
@@ -3816,7 +3820,7 @@ async function netJoin(){
   peer.on('open',()=>{const conn=peer.connect('npx-'+code.toLowerCase(),{reliable:true});
     conn.on('open',()=>{NET.link=linkPeer(conn);NET.link.attach();netSend({t:'hello',v:NET_V,name:NET.name,cfg:myCfg()});netStatus('接続しました… 準備中','ok');});});
 }
-function myCfg(){return {frame:CFG.frame,weapon:CFG.weapon,skills:CFG.skills.slice(),ult:CFG.ult,tone:validTone(CFG.tone),mech:myMech()};}
+function myCfg(){return {frame:CFG.frame,weapon:CFG.weapon,skills:CFG.skills.slice(),ult:CFG.ult,tone:toneOfFrame(CFG.frame),mech:myMech()};}
 function pilotName(){let n=($('oName').value||'').trim().toUpperCase().replace(/[^A-Z0-9 _\-]/g,'').slice(0,12);if(!n)n='PILOT-'+roomCode().slice(0,3);try{localStorage.setItem('npx_name',n);}catch(e){}$('oName').value=n;return n;}
 function validCfg(c){return c&&FRAMES[c.frame]&&WEAPONS[c.weapon]&&Array.isArray(c.skills)&&c.skills.length>=1&&c.skills.length<=2&&c.skills.every(k=>SKILLS[k])&&new Set(c.skills).size===c.skills.length&&(!c.ult||(ULTS[c.ult]&&ULTS[c.ult].frame===c.frame));}
 function netSend(o){if(NET.link)NET.link.send(o);}
@@ -3858,7 +3862,7 @@ function netBegin(seed){
   $('online').classList.remove('show');
   NET.on=true;NET.dropped=false;NET.mine=null;NET.theirs={};NET.hackplans={};NET.hacked=null;UI.hack=null;NET.rematch={me:false,them:false};
   RIVAL={...NET.rcfg,skills:NET.rcfg.skills.slice(),name:NET.rname};
-  const c0={...CFG,skills:CFG.skills.slice(),name:NET.name,mech:myMech()},c1={...RIVAL,skills:RIVAL.skills.slice()};
+  const c0={...CFG,tone:toneOfFrame(CFG.frame),skills:CFG.skills.slice(),name:NET.name,mech:myMech()},c1={...RIVAL,skills:RIVAL.skills.slice()};
   newMatch(seed,c0,c1,{mirror:NET.role==='guest'});recStart(seed,c0,c1,NET.role==='guest');
   UI.plan=[];UI.mode=null;UI.cells=[];UI.sel=null;UI.busy=false;UI.execPlan=null;UI.stepIdx=-1;
   $('setup').style.display='none';$('game').style.display='block';$('result').classList.remove('show');
@@ -3964,7 +3968,7 @@ function newRival(){RIVAL=randomCfg();RIVAL.name=RIVALS[Math.floor(Math.random()
 function startBattle(rematch){
   if(!rematch||!RIVAL)newRival();
   const seed=(Math.random()*4294967296)>>>0;
-  const c0={...CFG,skills:CFG.skills.slice(),name:'YOU',mech:myMech()},c1={...RIVAL,skills:RIVAL.skills.slice()};
+  const c0={...CFG,tone:toneOfFrame(CFG.frame),skills:CFG.skills.slice(),name:'YOU',mech:myMech()},c1={...RIVAL,skills:RIVAL.skills.slice()};
   newMatch(seed,c0,c1);recStart(seed,c0,c1,false);
   UI.plan=[];UI.mode=null;UI.cells=[];UI.sel=null;UI.busy=false;UI.execPlan=null;UI.stepIdx=-1;
   $('setup').style.display='none';$('game').style.display='block';$('result').classList.remove('show');
@@ -3991,26 +3995,29 @@ function showResult(kind){
   const rm=$('bRematch').querySelector('.bt'),lo=$('bLoadout').querySelector('.bt'),lob=$('bLoadout').querySelector('.bs');
   if(UI.replay){rm.textContent='WATCH AGAIN';$('bRematch').querySelector('.bs').textContent='もう一度見る';$('bRematch').disabled=false;lo.textContent='EXIT';lob.textContent='リプレイを閉じる';$('bWatch').hidden=true;}
   else{rm.textContent='REMATCH';lo.textContent='LOADOUT';lob.textContent='構成を変える';$('bWatch').hidden=false;}
-  showDrop();
+  showRecolor();
   $('result').classList.add('show');
 }
 function renderTones(){
-  const el=$('toneSw');if(!el)return;const own=new Set(ownedTones());if(CFG.tone&&!own.has(CFG.tone))CFG.tone=null;
-  const all=Object.keys(TONES);let h='<button class="sw'+(!CFG.tone?' on':'')+'" data-k="" title="ORIGINAL" style="background:linear-gradient(135deg,#dfe8ff 50%,#4d8bff 50%)"></button>';
-  for(const k of all){const T=TONES[k];h+=own.has(k)?'<button class="sw r'+T.rar+(CFG.tone===k?' on':'')+'" data-k="'+k+'" title="'+k+' · '+T.kana+'" style="background:'+T.sw+'"></button>':'<button class="sw lock" title="未入手" disabled></button>';}
-  el.innerHTML=h;$('toneCnt').textContent=own.size+'/'+all.length;
-  el.querySelectorAll('.sw:not(.lock)').forEach(b=>b.onclick=()=>{CFG.tone=b.dataset.k||null;store('tone',CFG.tone);refreshSetup();});
+  CFG.tone=toneOfFrame(CFG.frame);
+  const sw=$('toneSw'),nm=$('toneName');if(!sw||!nm)return;const T=CFG.tone&&TONES[CFG.tone];
+  sw.style.background=T?T.sw:'linear-gradient(135deg,#dfe8ff 50%,#4d8bff 50%)';
+  nm.textContent=T?CFG.tone:'ORIGINAL';nm.title=T?T.kana:'';nm.style.color=T?RARITY[T.rar].c:'#fff';
 }
-/* result screen: the colour this battle dropped, shown on your current frame */
-function showDrop(){
-  const el=$('rDrop');if(!el)return;el.hidden=true;if(UI.replay)return;
-  const k=dropTone();
-  if(!k){if(ownedTones().length>=Object.keys(TONES).length){el.hidden=false;el.style.setProperty('--rc','#ffd23a');el.innerHTML='<div><div class="rk">COLOR</div><div class="rn">COMPLETE</div><div class="rj">全カラーを入手済み</div></div>';}return;}
-  const T=TONES[k],R=RARITY[T.rar];el.hidden=false;el.style.setProperty('--rc',R.c);
-  el.innerHTML='<canvas width="176" height="176"></canvas><div><div class="rk">NEW COLOR · '+R.n+'</div><div class="rn">'+k+'</div><div class="rj">'+T.kana+' — どのフレームにも使える</div><button id="bTone">装備する</button></div>';
-  const cv=el.querySelector('canvas'),g=cv.getContext('2d'),fr=S&&S.units[0]?S.units[0].frame:CFG.frame;
-  try{drawMechFit(g,fr,CFG.weapon,PAL[0][fr],8,8,160,160,1,now(),{tone:k,noGlow:true});}catch(e){}
-  $('bTone').onclick=()=>{CFG.tone=k;store('tone',k);$('bTone').textContent='装備した';$('bTone').disabled=true;};
+/* result screen: one random re-colour of the frame you just fought with */
+function showRecolor(){
+  const el=$('rDrop');if(!el)return;el.hidden=true;if(UI.replay||!S||!S.units[0])return;
+  const fr=S.units[0].frame,cur=toneOfFrame(fr),label=k=>k?k+' · '+TONES[k].kana:'ORIGINAL';
+  el.hidden=false;el.style.setProperty('--rc','#9fb3d6');
+  el.innerHTML='<canvas width="176" height="176"></canvas><div><div class="rk">COLOR · '+fr+'</div><div class="rn" id="rcName">'+label(cur)+'</div><div class="rj" id="rcNote">今の色は保存されない。変えると元には戻せない</div><button id="bTone">ランダムで色を変える</button></div>';
+  const cv=el.querySelector('canvas'),g=cv.getContext('2d');
+  const draw=k=>{g.clearRect(0,0,176,176);try{drawMechFit(g,fr,CFG.weapon,PAL[0][fr],8,8,160,160,1,now(),{tone:k,noGlow:true});}catch(e){}};
+  draw(cur);
+  $('bTone').onclick=()=>{
+    const k=rollTone(cur);setFrameTone(fr,k);if(CFG.frame===fr)CFG.tone=k;draw(k);
+    const R=k?RARITY[TONES[k].rar]:RARITY[1];el.style.setProperty('--rc',R.c);
+    $('rcName').textContent=label(k);el.querySelector('.rk').textContent='NEW COLOR · '+(k?R.n:'ORIGINAL');$('rcNote').textContent=fr+' の色を変更した';
+    const b=$('bTone');b.textContent='変更済み';b.disabled=true;};
 }
 function toSetup(){UI.deadline=0;UI.hack=null;if(NET.on)netLeave(true);if(UI.replay)endReplayUI();$('result').classList.remove('show');$('game').style.display='none';$('setup').style.display='block';UI.screen='setup';S=null;newRival();refreshSetup();}
 
@@ -4282,7 +4289,7 @@ function wire(){
   setInterval(cpuTick,250);
   $('bUndo').onclick=undoAction;$('bReset').onclick=resetPlan;$('bExec').onclick=()=>executeTurn();
   $('bStart').onclick=()=>startBattle(false);
-  $('bRandom').onclick=()=>{const r=randomCfg();r.tone=CFG.tone;CFG=r;refreshSetup();};
+  $('bRandom').onclick=()=>{const r=randomCfg();CFG=r;refreshSetup();};
   $('bHow').onclick=$('bHelp2').onclick=()=>$('help').classList.add('show');
   $('bHelpClose').onclick=()=>$('help').classList.remove('show');
   $('help').addEventListener('pointerdown',e=>{if(e.target.id==='help')$('help').classList.remove('show');});
@@ -4307,7 +4314,7 @@ function frame(){
   try{if(UI.screen==='game')renderGame(t,dt);else renderSetupPreview(t);}catch(e){console.error(e);}
   requestAnimationFrame(frame);
 }
-CFG.tone=validTone(store('tone'));if(CFG.tone&&!ownedTones().includes(CFG.tone))CFG.tone=null;
+CFG.tone=toneOfFrame(CFG.frame);
 if(/[?&]test=1/.test(location.search))$('bEdition').hidden=false;
 wire();buildSetup();newRival();refreshSetup();
 {const h=document.querySelector('#help');if(h)h.querySelectorAll('li').forEach(li=>fmtNode(li,'fr'));}
